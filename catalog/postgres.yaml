@@ -1,0 +1,22 @@
+schema_version: "1.0"
+image: docker.io/library/postgres
+status: validated
+dimensions:
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.6.0"
+      sidecar_schema_version: "1.5"
+      observer: fs
+      validated_image: docker.io/library/postgres@sha256:fe03a7605299a34ddf5e4f285dff78c3d7190a576b3c6b46f2fcff69f4bffd54
+      validated_date: "2026-07-03"
+      duration_seconds: 310
+      confidence: moderate
+      workload: profiles/workloads/postgres.sh
+      workload_sha256: "0e9927503276921e3a549fe815e0cd6296684a0b2f6af301df0bff7028c9bc43"
+      validated_via: [bpf-observation, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []

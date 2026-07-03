@@ -28,6 +28,20 @@ images:
       candidate tmpfs and confirm the workload passes (it fails with no tmpfs:
       "could not create lock file /var/run/postgresql/...: Read-only file system").
 
+  - profile: catalog/docker.io/library/postgres.yaml
+    image: docker.io/library/postgres
+    tag: "16"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/postgres.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID] — all startup caps (gosu
+      root->postgres drop + initdb). Derived under the filesystem dimension's
+      read_only+tmpfs recommendation (the profile is applied as a unit): the
+      root-owned tmpfs socket dir must be chowned → CHOWN, invisible when caps are
+      derived on a writable rootfs. Predicate asserts the server (PID 1) is
+      non-root. The combined profile is workload-verified.
+
   - profile: catalog/docker.io/netdata/netdata.yaml
     image: docker.io/netdata/netdata
     tag: v2.10.3

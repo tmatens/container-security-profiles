@@ -7,7 +7,7 @@ Per-image acceptance criteria for the `docker.io/library/postgres` profile
 `profiles/workloads/postgres.sh` — connect + CREATE/INSERT/SELECT/DROP + a SIGHUP
 reload. Under the derived config it must complete cleanly.
 
-## filesystem (CL-0007) — derived by bisection
+## filesystem (CL-0007) — derived by drop-test
 - **read_only: true** — fs observation showed every runtime write landing on the
   postgres data VOLUME (`/var/lib/postgresql/data`); nothing needs a writable
   rootfs at runtime.

@@ -13,7 +13,7 @@ images:
     image: docker.io/library/postgres
     tag: "16"
     dimension: filesystem
-    method: bisection
+    method: drop-test
     manual: true
     workload: profiles/workloads/postgres.sh
     note: >-
@@ -27,11 +27,11 @@ images:
     image: docker.io/netdata/netdata
     tag: v2.10.3
     dimension: capabilities
-    method: bisection
+    method: drop-test
     manual: true
     workload: profiles/workloads/netdata.sh
     note: >-
-      cap_add minimum via drop-and-restart bisection with the netdata.sh
+      cap_add minimum via drop-and-restart drop-test with the netdata.sh
       correctness predicate (asserts the daemon still drops to a non-root uid).
       Startup caps (SETUID/SETGID) are invisible to runtime observation.
       Representative run: pid:host, host /proc,/sys,docker.sock ro-mounts, host

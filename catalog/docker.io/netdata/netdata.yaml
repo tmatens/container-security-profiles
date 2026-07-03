@@ -3,7 +3,7 @@
 # container lifetime, so it captures the startup-only caps SETUID/SETGID (the
 # root->netdata privilege drop) that runtime observation records as "unused."
 # Dropping those leaves netdata healthy while silently running as root.
-schema_version: "1.1"
+schema_version: "1.2"
 image: docker.io/netdata/netdata
 applies_to:
   tags: ["v2.10.3"]
@@ -27,6 +27,23 @@ dimensions:
       observation_backend:
         ig_version: v0.51.0
         gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: host
+        pid: host
+        devices: []
+        security_opt: [apparmor=unconfined]
+        mounts:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /etc/os-release:/host/etc/os-release:ro
+          - /var/log:/host/var/log:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - /etc/passwd:/host/etc/passwd:ro
+          - /etc/group:/host/etc/group:ro
+        env: [PGID]
       drop_test:
         checks:
           - removed: CHOWN

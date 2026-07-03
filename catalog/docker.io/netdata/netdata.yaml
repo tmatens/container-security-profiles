@@ -27,3 +27,17 @@ dimensions:
       observation_backend:
         ig_version: v0.51.0
         gadgets: []
+      drop_test:
+        checks:
+          - removed: CHOWN
+            required: false
+            observed: "correct: ready, apps.plugin collecting, daemon uid=201"
+          - removed: FOWNER
+            required: false
+            observed: "correct: ready, apps.plugin collecting, daemon uid=201"
+          - removed: SETUID
+            required: true
+            observed: "daemon running as ROOT (privilege drop failed)"
+          - removed: SETGID
+            required: true
+            observed: "daemon running as ROOT (privilege drop failed)"

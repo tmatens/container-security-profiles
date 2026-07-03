@@ -30,3 +30,8 @@ dimensions:
       observation_backend:
         ig_version: v0.51.0
         gadgets: []
+      drop_test:
+        checks:
+          - removed: /run/postgresql
+            required: true
+            observed: "postgres did not become ready in 60s"

@@ -2,4 +2,4 @@
 # versioned contract this catalog conforms to. This is the ONLY tie to
 # compose-lint: no vendoring, no code dependency. Bump deliberately to adopt a
 # new schema version, and re-validate the whole catalog against it.
-e65ee7119eb24918f3407c7acbe320cf85ffa486
+5fed50b9260530ee11d3ad0b6a186d8885076809

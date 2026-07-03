@@ -1,0 +1,27 @@
+# netdata capability minimum — derived by BISECTION (drop-a-cap / restart /
+# verify), the authoritative source for cap_add. Bisection covers the full
+# container lifetime, so it captures the startup-only caps SETUID/SETGID (the
+# root->netdata privilege drop) that runtime observation records as "unused."
+# Dropping those leaves netdata healthy while silently running as root.
+schema_version: "1.1"
+image: docker.io/netdata/netdata
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_ADMIN, SYS_PTRACE]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.6.0"
+      sidecar_schema_version: "1.5"
+      observer: bisection
+      validated_image: docker.io/netdata/netdata@sha256:bcc822ec685dd7ee488e9f99b957f479b66301be04f13f346df692ad7de94151
+      validated_date: "2026-07-03"
+      duration_seconds: 360
+      confidence: high
+      workload: profiles/workloads/netdata.sh
+      workload_sha256: 3d16017bbdb847c41199af1a6da5c8230ee04e51acf75fd500565c8fc55f2283
+      validated_via: [bisection, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []

@@ -1,0 +1,74 @@
+# caddy minimum security profile (default file server), derived by drop-test.
+# Two dimensions:
+#  - capabilities: caddy binds the privileged :80, so it needs exactly
+#    NET_BIND_SERVICE and nothing else. Every other Docker-default cap was
+#    dropped in turn and the file server kept serving (matches the bisected
+#    ground truth in container-sec-derive testdata/caddy/).
+#  - filesystem: caddy runs correctly under read_only:true with NO tmpfs. Its
+#    only writes are /data (TLS certificates) and /config (config autosave);
+#    dropping either leaves the file server working (they log non-fatal errors).
+#    Those paths hold PERSISTENT data and belong on VOLUMES, not tmpfs — see the
+#    criteria doc. This is the honest contrast to postgres, whose /run/postgresql
+#    socket dir is ephemeral and so is genuinely tmpfs.
+schema_version: "1.1"
+image: docker.io/library/caddy
+applies_to:
+  tags: ["2"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.6.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/caddy@sha256:af5fdcd76f2db5e4e974ee92f96ee8c0fc3edb55bd4ba5032547cbf3f65e486d
+      validated_date: "2026-07-03"
+      duration_seconds: 30
+      confidence: high
+      workload: profiles/workloads/caddy.sh
+      workload_sha256: "251b93f73dda3d5ca12f75edbda4aa8d80d50aea853b2699445dfbf030196726"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: FSETID, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: FOWNER, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: MKNOD, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: NET_RAW, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: SETGID, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: SETUID, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: SETFCAP, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: SETPCAP, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: NET_BIND_SERVICE, required: true, observed: "caddy not serving on :80 (bind failed or container exited)"}
+          - {removed: SYS_CHROOT, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: KILL, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: AUDIT_WRITE, required: false, observed: "caddy serving the file server on :80"}
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.6.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/caddy@sha256:af5fdcd76f2db5e4e974ee92f96ee8c0fc3edb55bd4ba5032547cbf3f65e486d
+      validated_date: "2026-07-03"
+      duration_seconds: 30
+      confidence: high
+      workload: profiles/workloads/caddy.sh
+      workload_sha256: "251b93f73dda3d5ca12f75edbda4aa8d80d50aea853b2699445dfbf030196726"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      drop_test:
+        checks:
+          - {removed: /data, required: false, observed: "caddy serving the file server on :80"}
+          - {removed: /config, required: false, observed: "caddy serving the file server on :80"}

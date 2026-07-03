@@ -40,3 +40,25 @@ images:
       Startup caps (SETUID/SETGID) are invisible to runtime observation.
       Representative run: pid:host, host /proc,/sys,docker.sock ro-mounts, host
       network, the granted cap set present.
+
+  - profile: catalog/docker.io/library/caddy.yaml
+    image: docker.io/library/caddy
+    tag: "2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/caddy.sh
+    note: >-
+      cap_add minimum via drop-test: baseline cap_drop:ALL + the Docker default
+      cap set, drop each and re-verify the file server serves on :80. Only
+      NET_BIND_SERVICE (bind the privileged :80) survives.
+
+  - profile: catalog/docker.io/library/caddy.yaml
+    image: docker.io/library/caddy
+    tag: "2"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/caddy.sh
+    note: >-
+      read_only:true, tmpfs:[] — caddy serves under --read-only; /data (certs)
+      and /config (autosave) drop-test as not-required-as-tmpfs and belong on
+      persistent volumes.

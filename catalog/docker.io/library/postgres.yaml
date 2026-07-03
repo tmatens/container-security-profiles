@@ -1,12 +1,22 @@
-# postgres read-only-filesystem minimum. `read_only: true` is informed by fs
-# observation (all runtime writes land on the data VOLUME), but the tmpfs set was
-# established by drop-test (verification): postgres runs correctly under
-# read_only:true + tmpfs:[/run/postgresql], and FAILS under read_only:true with no
-# tmpfs — "could not create lock file /var/run/postgresql/.s.PGSQL.5432.lock:
-# Read-only file system". That socket-dir write happens once at startup, which
-# runtime observation cannot reliably capture (attach-window), so drop-test is the
-# authoritative source here.
-schema_version: "1.1"
+# postgres minimum security profile (default root-then-gosu-drop invocation),
+# derived by drop-test. Two dimensions, applied as a unit:
+#  - filesystem: read_only:true + tmpfs:[/run/postgresql]. All runtime writes land
+#    on the data VOLUME; the socket dir is a startup-only write (attach-window-
+#    blind to observation), established by verification — postgres FAILS under
+#    read_only:true with no tmpfs ("could not create lock file
+#    /var/run/postgresql/...: Read-only file system").
+#  - capabilities: cap_drop:[ALL] + cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID].
+#    All four are STARTUP caps (gosu root->postgres drop + initdb) invisible to
+#    runtime observation. Derived under the filesystem dimension's recommendation
+#    (read_only + tmpfs), because the profile is applied as a unit: the root-owned
+#    tmpfs socket dir must be chowned to the postgres user → CHOWN, which is not
+#    required when caps are derived on a writable rootfs. The combined profile
+#    (both dimensions together) is workload-verified.
+#
+# run_config records the invocation each minimum was derived under: the default
+# (no `user:` override), so the root->postgres drop happens. Run with `user:` set,
+# postgres skips the drop and the capability minimum does not apply.
+schema_version: "1.2"
 image: docker.io/library/postgres
 applies_to:
   tags: ["16"]
@@ -30,8 +40,62 @@ dimensions:
       observation_backend:
         ig_version: v0.51.0
         gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [POSTGRES_PASSWORD]
       drop_test:
         checks:
           - removed: /run/postgresql
             required: true
             observed: "postgres did not become ready in 60s"
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.6.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/postgres@sha256:fe03a7605299a34ddf5e4f285dff78c3d7190a576b3c6b46f2fcff69f4bffd54
+      validated_date: "2026-07-03"
+      duration_seconds: 60
+      confidence: high
+      workload: profiles/workloads/postgres.sh
+      workload_sha256: "0e9927503276921e3a549fe815e0cd6296684a0b2f6af301df0bff7028c9bc43"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [POSTGRES_PASSWORD]
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: true, observed: "workload failed / not ready"}
+          - {removed: DAC_OVERRIDE, required: true, observed: "workload failed / not ready"}
+          - {removed: FSETID, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: FOWNER, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SETGID, required: true, observed: "workload failed / not ready"}
+          - {removed: SETUID, required: true, observed: "workload failed / not ready"}
+          - {removed: SETFCAP, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}

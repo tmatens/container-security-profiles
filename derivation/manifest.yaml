@@ -4,17 +4,22 @@
 # new digest and, if the recommendation is unchanged, bumps validated_image +
 # validated_date; if it changed, opens a human-review PR.
 #
-# `manual: true` entries are assisted, not auto-derived (their minimum depends on
-# startup behavior that runtime observation cannot capture — see each note). The
-# driver's auto path handles fs profiles whose writes are purely runtime; both
-# current entries happen to need verification, so neither is auto today.
+# The loop dispatches per `method`:
+#   drop-test       — csd's scripts/drop_test.sh: drop-a-candidate / restart /
+#                     correctness predicate. Covers the full container lifetime,
+#                     so it derives the startup-only minimums runtime observation
+#                     is blind to (a socket dir's tmpfs, a root->user privilege
+#                     drop's SETUID/SETGID). Both current entries use it.
+#   bpf-observation — csd --observe: the ig gadgets, for dimensions whose
+#                     requirements are purely runtime.
+# Both methods are automated; the loop matches a drop-test entry to its csd spec
+# (testdata/drop-test/*.yaml) by image + dimension.
 images:
   - profile: catalog/docker.io/library/postgres.yaml
     image: docker.io/library/postgres
     tag: "16"
     dimension: filesystem
     method: drop-test
-    manual: true
     workload: profiles/workloads/postgres.sh
     note: >-
       read_only:true + tmpfs:[/run/postgresql]. The tmpfs is not purely
@@ -28,7 +33,6 @@ images:
     tag: v2.10.3
     dimension: capabilities
     method: drop-test
-    manual: true
     workload: profiles/workloads/netdata.sh
     note: >-
       cap_add minimum via drop-and-restart drop-test with the netdata.sh

@@ -1,31 +1,38 @@
 # Re-derivation spec (compose-lint#360 step 4). How to re-derive each catalog
 # profile representatively. Consumed by container-sec-derive's derive-profiles
-# workflow on the self-hosted BPF runner: on a digest bump it re-derives against
-# the new digest and, if the recommendation is unchanged, bumps validated_image +
+# loop on the self-hosted BPF runner: on a digest bump it re-derives against the
+# new digest and, if the recommendation is unchanged, bumps validated_image +
 # validated_date; if it changed, opens a human-review PR.
+#
+# `manual: true` entries are assisted, not auto-derived (their minimum depends on
+# startup behavior that runtime observation cannot capture — see each note). The
+# driver's auto path handles fs profiles whose writes are purely runtime; both
+# current entries happen to need verification, so neither is auto today.
 images:
   - profile: catalog/docker.io/library/postgres.yaml
     image: docker.io/library/postgres
     tag: "16"
-    dimension: fs
+    dimension: filesystem
+    method: bisection
+    manual: true
     workload: profiles/workloads/postgres.sh
-    workload_env: PGCONTAINER          # env var the workload reads for the container
-    duration: 310s
-    run:
-      env:
-        - POSTGRES_PASSWORD=postgres
+    note: >-
+      read_only:true + tmpfs:[/run/postgresql]. The tmpfs is not purely
+      observable — postgres creates its socket dir at startup, which is
+      attach-window-blind. Re-derive by verification: run under read_only +
+      candidate tmpfs and confirm the workload passes (it fails with no tmpfs:
+      "could not create lock file /var/run/postgresql/...: Read-only file system").
 
   - profile: catalog/docker.io/netdata/netdata.yaml
     image: docker.io/netdata/netdata
     tag: v2.10.3
     dimension: capabilities
     method: bisection
-    manual: true                        # not auto-derived — see note
+    manual: true
     workload: profiles/workloads/netdata.sh
     note: >-
-      cap_add minimum requires drop-and-restart bisection with the netdata.sh
+      cap_add minimum via drop-and-restart bisection with the netdata.sh
       correctness predicate (asserts the daemon still drops to a non-root uid).
-      Startup caps (SETUID/SETGID) are invisible to runtime observation, so this
-      is assisted, not auto-derived: re-run the bisection on the BPF runner and
-      review the result. Representative run: pid:host, host /proc,/sys,docker.sock
-      ro-mounts, host network, the granted cap set present.
+      Startup caps (SETUID/SETGID) are invisible to runtime observation.
+      Representative run: pid:host, host /proc,/sys,docker.sock ro-mounts, host
+      network, the granted cap set present.

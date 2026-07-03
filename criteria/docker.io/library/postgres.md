@@ -1,28 +1,20 @@
 # postgres — validation criteria
 
 Per-image acceptance criteria for the `docker.io/library/postgres` profile
-(compose-lint#359 convention). A `validated` profile for this image must have
-been derived against a run meeting the scenarios and pass criteria below.
+(compose-lint#359). Validated against `postgres:16@sha256:fe03a760…`.
 
-## Image
-`docker.io/library/postgres` (validated against `postgres:16@sha256:fe03a760…`).
+## Representative workload / correctness predicate
+`profiles/workloads/postgres.sh` — connect + CREATE/INSERT/SELECT/DROP + a SIGHUP
+reload. Under the derived config it must complete cleanly.
 
-## Representative workload
-`profiles/workloads/postgres.sh` — connects to a running postgres container and
-drives a representative set of operations, not a liveness poke:
-
-- `CREATE TABLE` / `INSERT` / `SELECT` / `DROP`
-- a `SIGHUP` configuration reload
-
-Required env: `PGCONTAINER`. Defaults: user/db/password `postgres`.
-
-## Dimensions & pass criteria
-
-### filesystem (CL-0007)
-- **Scenario:** run the workload against the container for ≥ 300s with
-  `csd --observe fs`.
-- **Pass criteria:** every observed write correlates to the postgres data volume
-  (`/var/lib/postgresql/data`); no rootfs write requires a tmpfs mount. Derived
-  recommendation is `read_only: true`, `tmpfs: []`. Confidence ≥ moderate,
-  `trace_health.drop_rate` < 1%, digest-pinned.
-- **Observed result:** 147+ write events, 0 dropped, all volume-covered.
+## filesystem (CL-0007) — derived by bisection
+- **read_only: true** — fs observation showed every runtime write landing on the
+  postgres data VOLUME (`/var/lib/postgresql/data`); nothing needs a writable
+  rootfs at runtime.
+- **tmpfs: [/run/postgresql]** — established by verification, because the socket
+  write is startup-only (attach-window-blind to observation):
+  - `read_only:true` + `tmpfs:[/run/postgresql]` → the workload passes, no errors.
+  - `read_only:true` + no tmpfs → **FAILS** at startup: "could not create lock
+    file /var/run/postgresql/.s.PGSQL.5432.lock: Read-only file system".
+- **Pass criteria:** the workload passes under the derived config, and removing
+  the tmpfs breaks startup (confirming it is required and minimal).

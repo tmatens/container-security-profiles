@@ -76,3 +76,16 @@ images:
       read_only:true, tmpfs:[] — caddy serves under --read-only; /data (certs)
       and /config (autosave) drop-test as not-required-as-tmpfs and belong on
       persistent volumes.
+
+  - profile: catalog/ghcr.io/gethomepage/homepage.yaml
+    image: ghcr.io/gethomepage/homepage
+    tag: v1.13.2
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/homepage.sh
+    note: >-
+      read_only:true, tmpfs:[/app/.next/cache] — Next.js image optimization
+      mkdir's the cache on the first /_next/image request and errors when it
+      isn't writable (a bare dashboard GET serves without it, so the predicate
+      must exercise image optimization). /app/config is a persistent volume, not
+      tmpfs; /tmp is not required.

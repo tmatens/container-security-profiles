@@ -1,5 +1,7 @@
 schema_version: "1.0"
 image: docker.io/library/postgres
+applies_to:
+  tags: ["16"]
 status: validated
 dimensions:
   filesystem:

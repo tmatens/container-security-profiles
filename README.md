@@ -67,3 +67,28 @@ workload and committed per-image criteria are required for promotion to
 
 See container-sec-derive's `docs/field-results.md` for worked examples
 (postgres, netdata, homepage) and `--format compose-lint-profile`.
+
+## Freshness & re-derivation (compose-lint#360)
+
+Profiles are pinned to an exact `image@sha256:…`; when upstream republishes the
+tag, the profile is derived against a superseded artifact and must be re-derived.
+This runs in two parts, split by cost:
+
+- **Trigger — `staleness` workflow (this repo, hosted, weekly).** Registry-only
+  (no docker, no BPF, no secret): compares each profile's pinned digest to the
+  tag's current published digest and opens a tracking issue on drift. Seconds of
+  runtime — negligible Actions minutes. Run it ad-hoc via `workflow_dispatch` or
+  `python scripts/check_staleness.py`.
+- **Re-derivation — the heavy loop (self-hosted BPF runner).** Spinning the
+  container, `csd` eBPF observation, and cap bisection need root + `--pid=host` +
+  `ig`, so this runs on the **self-hosted BPF runner** — where GitHub bills **no
+  Actions minutes** (self-hosted runners are free). It belongs **in this repo**,
+  on a shared/org-level self-hosted runner, so it updates profiles **in place**
+  (no cross-repo token). It reproduces each image's representative runtime config,
+  re-derives, re-validates, and bumps the pinned digest + `validated_date`. Not
+  yet wired — the trigger above is part 1.
+
+Cost note: only hosted runners consume this private repo's Actions-minute quota,
+and only the light `validate` + `staleness` jobs use them (both seconds-scale).
+The expensive derivation is free on the self-hosted runner. (Making the repo
+public would remove the hosted-minute cost entirely.)

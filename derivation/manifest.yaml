@@ -89,3 +89,19 @@ images:
       isn't writable (a bare dashboard GET serves without it, so the correctness check
       must exercise image optimization). /app/config is a persistent volume, not
       tmpfs; /tmp is not required.
+
+  - profile: catalog/codeberg.org/forgejo/forgejo.yaml
+    image: codeberg.org/forgejo/forgejo
+    tag: "15"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/forgejo.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT] via drop-test:
+      baseline cap_drop:ALL + the Docker default cap set on a fresh /data volume,
+      drop each and re-verify. The container runs two root daemons under s6, so the
+      minimum is the union: gitea web needs CHOWN/DAC_OVERRIDE (chown+setup the
+      fresh /data) + SETUID/SETGID (su-exec root->git drop); sshd needs SYS_CHROOT
+      (per-connection privsep chroot). SYS_CHROOT is the coverage sharp edge — a
+      web-only check reports 200 while git-over-SSH is dead, so the workload
+      exercises SSH. All five are startup caps, invisible to runtime observation.

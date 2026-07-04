@@ -137,3 +137,19 @@ images:
       docker-managed volume inherits it and the find-chown is a no-op. A foreign-owned
       bind mount adds CHOWN (only); running as the mysql uid on a pre-owned datadir
       shrinks it to []. Startup caps, invisible to runtime observation.
+
+  - profile: catalog/docker.io/grafana/grafana.yaml
+    image: docker.io/grafana/grafana
+    tag: "13.0.2"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/grafana.sh
+    note: >-
+      read_only:true, tmpfs:[] — grafana runs under --read-only with only its
+      /var/lib/grafana data volume (persistent: sqlite DB + plugins, NOT tmpfs)
+      writable. Baseline read_only + candidate /tmp; drop /tmp and re-verify health
+      db ok + a dashboard write/read-back + a backend datasource (Loki) plugin
+      running. /tmp is NOT required for core + prometheus/Loki datasource querying;
+      it is used only by runtime plugin installation, the elasticsearch plugin, and
+      rendering/export (add tmpfs:[/tmp] for those). Confidence moderate — grafana's
+      feature surface exceeds this workload's coverage (see criteria).

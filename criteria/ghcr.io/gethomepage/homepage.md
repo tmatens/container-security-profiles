@@ -4,12 +4,12 @@ Per-image acceptance criteria for the `ghcr.io/gethomepage/homepage` profile
 (compose-lint#359). Validated against `homepage:v1.13.2@sha256:a0b71c8e…`, the
 default dashboard.
 
-## Representative workload / correctness predicate
+## Representative workload / correctness check
 `profiles/workloads/homepage.sh` — wait for readiness, serve the dashboard
 `GET /`, and trigger Next.js image optimization (`GET /_next/image`, which writes
 `/app/.next/cache`). Correct iff the dashboard serves **and** the image cache is
-writable (no read-only / ENOENT error). The drop-test predicate
-(`container-sec-derive testdata/drop-test/predicates/homepage.sh`) is the same
+writable (no read-only / ENOENT error). The drop-test correctness check
+(`container-sec-derive testdata/drop-test/correctness/homepage.sh`) is the same
 signal.
 
 ## filesystem — derived by drop-test
@@ -19,7 +19,7 @@ signal.
   dashboard `GET` serves fine read-only, so `/app/.next/cache` looks unnecessary.
   But Next.js **image optimization** (used for service/bookmark icons) `mkdir`s
   `/app/.next/cache` on the first `/_next/image` request and throws
-  (`unhandledRejection: ENOENT mkdir`) when it can't. The predicate exercises
+  (`unhandledRejection: ENOENT mkdir`) when it can't. The correctness check exercises
   image optimization so the requirement surfaces. `/tmp` was drop-tested and is
   **not** required.
 - **`/app/config` is a persistent VOLUME, not tmpfs.** homepage's configuration

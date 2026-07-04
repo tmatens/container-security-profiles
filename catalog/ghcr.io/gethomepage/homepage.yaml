@@ -4,7 +4,7 @@
 # /app/.next/cache — Next.js image optimization mkdir's it on the first
 # /_next/image request and errors (unhandledRejection) when it isn't writable. A
 # bare dashboard GET serves even without the cache, so the requirement only shows
-# under image optimization; the drop-test predicate exercises it. /tmp was
+# under image optimization; the drop-test correctness check exercises it. /tmp was
 # drop-tested and is NOT required.
 schema_version: "1.2"
 image: ghcr.io/gethomepage/homepage

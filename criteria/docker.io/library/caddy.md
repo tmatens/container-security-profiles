@@ -4,11 +4,11 @@ Per-image acceptance criteria for the `docker.io/library/caddy` profile
 (compose-lint#359). Validated against `caddy:2@sha256:af5fdcd7…`, the default
 file-server configuration.
 
-## Representative workload / correctness predicate
+## Representative workload / correctness check
 `profiles/workloads/caddy.sh` — wait for readiness, serve a file-server `GET /`
 on `:80`, send `SIGUSR1` to reload the Caddyfile, and serve again. Under the
-derived config it must complete cleanly. The drop-test predicate
-(`container-sec-derive testdata/drop-test/predicates/caddy.sh`) is the same
+derived config it must complete cleanly. The drop-test correctness check
+(`container-sec-derive testdata/drop-test/correctness/caddy.sh`) is the same
 correctness signal: caddy serves a `GET` on `:80`.
 
 ## capabilities — derived by drop-test

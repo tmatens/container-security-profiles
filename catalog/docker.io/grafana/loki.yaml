@@ -1,0 +1,49 @@
+# loki — read-only-filesystem minimum, derived by drop-test. loki already runs
+# cap_drop:ALL and as a non-root user (uid 10001), so the value is the filesystem
+# dimension. The derived tmpfs minimum is EMPTY.
+#
+# filesystem: read_only:true, tmpfs:[]. Under a read-only rootfs with only its /loki
+# data dir writable, loki initialises all modules, becomes ready, ingests a pushed
+# log, and serves it back on query — with a read-only /tmp (drop-tested NOT
+# required). /loki holds chunks + WAL + index + rules and is a PERSISTENT VOLUME
+# (must survive restarts, NOT tmpfs).
+#
+# loki is DISTROLESS (no shell/curl), so it is validated from a sidecar probe
+# sharing its network namespace, not `docker exec` — see the criteria doc.
+schema_version: "1.3"
+image: docker.io/grafana/loki
+applies_to:
+  tags: ["3.7.2"]
+status: validated
+dimensions:
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/grafana/loki@sha256:191d4fdfb7264f16989f0a57f320872620a5a7c2ceeec6229212c4190ec49b86
+      validated_date: "2026-07-04"
+      duration_seconds: 40
+      confidence: high
+      workload: profiles/workloads/loki.sh
+      workload_sha256: "44bffbd96f1370095e4e081b90d035cd6d71168926990e4d514580c4ef7c2c5b"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: ["-config.file=/etc/loki/local-config.yaml"]
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["loki-data:/loki"]
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}

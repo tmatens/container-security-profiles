@@ -19,13 +19,14 @@ cap reads as unused).
 ## Representative workload / correctness check
 `profiles/workloads/netdata.sh` — the drop-and-restart correctness check. "Still works"
 means, per candidate cap dropped: container healthy, HTTP API up, `apps.plugin`
-collecting, **the daemon still dropped to a non-root uid**, **and per-process
-io/fd metrics still collect for a NON-root process group** (`app.netdata_*`, uid
-201). Liveness alone is insufficient — netdata runs "healthy" as root when the
-privilege drop fails. The non-root per-process assertion is what makes
-`DAC_OVERRIDE`/`SYS_PTRACE` honestly testable: reading another uid's
-`/proc/<pid>/io|fd` is the sensitive path, and a root target process would be
-readable for free (hiding whether the cap is needed).
+collecting, **the daemon still dropped to a non-root uid**, **and a per-process
+`fds_open` is NON-ZERO** (`app.dockerd_*` etc.). Liveness alone is insufficient —
+netdata runs "healthy" as root when the privilege drop fails. The **non-zero**
+per-process assertion is what makes `DAC_OVERRIDE`/`SYS_PTRACE` honestly testable:
+`apps.plugin` runs real-uid = the netdata user, so it needs `CAP_SYS_PTRACE` to
+read any process's `/proc/<pid>/io|fd`; without it it reports every per-process
+metric as **0 (not null)**, so a mere non-null check passes on broken collection
+(and once wrongly derived `SYS_PTRACE` removable, regressing production).
 
 `duration_seconds` records the approximate total drop-test wall-clock; drop-test
 is exempt from the observation-window floor (ADR-017 §8).
@@ -38,14 +39,17 @@ is exempt from the observation-window floor (ADR-017 §8).
     (API/apps.plugin never come up).
   - `SETUID`, `SETGID` — **required**: dropping either makes netdata run as root
     (uid 0); the privilege drop needs them at startup.
-  - `SYS_PTRACE` — **removable**: `apps.plugin` is setuid-root, so it reads other
-    processes' `/proc/<pid>/io|fd` as root without the cap. Verified: per-process
-    metrics still collect for a non-root group (uid 201) with it removed.
+  - `SYS_PTRACE` — **required**: `apps.plugin` runs real-uid = the netdata user,
+    so it needs `CAP_SYS_PTRACE` to read any process's `/proc/<pid>/io|fd`.
+    Dropping it makes every per-process metric collect as **0** — the drop-test
+    detects this via the non-zero `fds_open` check. (An earlier non-null check
+    missed it and wrongly derived it removable, regressing production.)
   - `SYS_ADMIN` — **removable**: the image ships **no `ebpf.plugin`**, so
     `netdata.conf`'s `ebpf=yes` is a no-op and `SYS_ADMIN` gates nothing (no
     `ebpf.*` charts; removing it changes nothing).
-  - `CHOWN`, `FOWNER` — removable: netdata stayed correct without them.
-- **Verified minimum:** `cap_add: [DAC_OVERRIDE, SETGID, SETUID]`
-  (combination-verified: netdata run with exactly these three passes the
-  correctness check). Was `[…, SYS_ADMIN, SYS_PTRACE]` before this honest
-  re-derivation on a posture-matched host.
+  - `CHOWN`, `FOWNER` — removable: netdata stayed correct (per-process metrics
+    non-zero) without them. `CHOWN`'s absence only produced cosmetic startup log
+    noise from a stale alarm-notify cache (a leak, since cleared), not a
+    functional loss.
+- **Verified minimum:** `cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]`
+  (drop `SYS_ADMIN` only from the 5-cap grant). Matches the live deploy.

@@ -14,13 +14,16 @@ set -euo pipefail
 : "${NDCONTAINER:?NDCONTAINER must be set}"
 
 API=http://localhost:19999
-# chart_has_data <chart-id> -> 0 if the latest sample has a non-null value.
-chart_has_data() {
+# chart_nonzero <chart-id> -> 0 if the latest sample has a NON-ZERO value.
+# Non-zero, not merely non-null: apps.plugin denied access to a process's /proc
+# reports the metric as 0 (not null), so a non-null check passes on broken
+# collection. A live process always has open fds > 0.
+chart_nonzero() {
     curl -fsS --max-time 4 "${API}/api/v1/data?chart=$1&after=-20&points=1&format=json" 2>/dev/null \
         | python3 -c 'import sys,json
 try:
  rows=json.load(sys.stdin).get("data",[])
- sys.exit(0 if [v for r in rows for v in r[1:] if v is not None] else 1)
+ sys.exit(0 if [v for r in rows for v in r[1:] if v is not None and v != 0] else 1)
 except Exception:
  sys.exit(1)'
 }
@@ -42,17 +45,19 @@ pid="$(docker inspect -f '{{.State.Pid}}' "$NDCONTAINER")"
 uid="$(awk '/^Uid:/{print $2}' /proc/"$pid"/status)"
 [ "$uid" != 0 ] || { echo "daemon is running as ROOT (privilege drop failed)"; exit 1; }
 
-# 4. CORRECTNESS: per-process io/fd metrics collect for a NON-ROOT process group
-# (netdata's own uid-201 processes). Reading another uid's /proc/<pid>/io|fd is
-# what DAC_OVERRIDE / SYS_PTRACE would gate — asserting a non-root group's data
-# (not a root process, seen for free) is what makes those caps honestly testable.
-ppdata=0
+# 4. CORRECTNESS: per-process io/fd metrics are actually COLLECTED (non-zero).
+# apps.plugin runs real-uid = the netdata user (setuid gives euid 0, not real uid
+# 0), so it needs CAP_SYS_PTRACE to read ANY process's /proc/<pid>/io|fd; without
+# it, it reports every per-process metric as 0 (not null). So require a per-process
+# fds_open to be NON-ZERO — dropping SYS_PTRACE zeros it. (A prior non-null check
+# passed on all-zeros and wrongly derived SYS_PTRACE removable, regressing prod.)
+ppok=0
 for _ in 1 2 3 4 5 6 7 8; do
-    for ch in app.netdata_fds_open app.netdata_disk_logical_io app.polkitd_fds_open; do
-        if chart_has_data "$ch"; then ppdata=1; PPCH="$ch"; break 2; fi
+    for ch in app.dockerd_fds_open app.netdata_fds_open app.systemd-journald_fds_open app.containerd_fds_open; do
+        if chart_nonzero "$ch"; then ppok=1; PPCH="$ch"; break 2; fi
     done
     sleep 3
 done
-[ "$ppdata" = 1 ] || { echo "no per-process metrics for a non-root group (DAC_OVERRIDE/SYS_PTRACE gap)"; exit 1; }
+[ "$ppok" = 1 ] || { echo "per-process metrics all zero — apps.plugin can't read /proc/<pid>/fd (SYS_PTRACE gap)"; exit 1; }
 
-echo "netdata correct: healthy, API up, daemon uid=$uid (non-root), per-process metrics collecting for non-root group ($PPCH)"
+echo "netdata correct: healthy, API up, daemon uid=$uid (non-root), per-process metrics collecting non-zero ($PPCH)"

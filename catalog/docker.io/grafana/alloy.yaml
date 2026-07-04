@@ -1,0 +1,49 @@
+# alloy (Grafana Alloy) — read-only-filesystem minimum, derived by drop-test. alloy
+# already runs cap_drop:ALL and as a non-root user (uid 473), so the value is the
+# filesystem dimension. The derived tmpfs minimum is EMPTY.
+#
+# filesystem: read_only:true, tmpfs:[]. Under a read-only rootfs with only its
+# storage.path location writable, alloy loads its pipeline, becomes ready, and runs
+# — with a read-only /tmp (drop-tested NOT required). Under the image default
+# (--storage.path=/var/lib/alloy/data) that location is /var/lib/alloy, a PERSISTENT
+# VOLUME (WAL / component state; must survive restarts, NOT tmpfs).
+#
+# alloy is DISTROLESS (no shell/curl), so it is validated from a sidecar probe
+# sharing its network namespace, not `docker exec` — see the criteria doc.
+schema_version: "1.3"
+image: docker.io/grafana/alloy
+applies_to:
+  tags: ["v1.16.2"]
+status: validated
+dimensions:
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/grafana/alloy@sha256:32913cbfac652d15fa84d256a74e5ee3f71575961bb19d34796ce3838bfba693
+      validated_date: "2026-07-04"
+      duration_seconds: 5
+      confidence: high
+      workload: profiles/workloads/alloy.sh
+      workload_sha256: "5a5396d750b6381e9712bb46ca156ccaa5b4931e6dbedd87fc1836ce107ed736"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["alloy-data:/var/lib/alloy"]
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: alloy ready, pipeline live (82 alloy_ metrics), storage.path writable"}

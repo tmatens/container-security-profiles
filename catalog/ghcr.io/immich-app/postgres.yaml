@@ -1,0 +1,66 @@
+# immich's postgres (a custom pgvector/vectorchord image) — minimum capabilities,
+# derived by drop-test against immich's own deployment invocation.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID].
+# All four are STARTUP caps, invisible to runtime observation: the entrypoint
+# starts as root, chowns a FRESH data dir (CHOWN) it doesn't yet own
+# (DAC_OVERRIDE for the ensuing writes), and drops to the postgres user (uid 999)
+# via gosu (SETUID/SETGID). The declared cap_add additionally grants FOWNER, which
+# is a genuine over-grant — it is not exercised even on a fresh, foreign-owned data
+# dir (see the criteria doc's drop-test evidence).
+#
+# run_config records immich's invocation: root (no `user:` override), a persistent
+# data-dir bind, the POSTGRES_* env. The minimum was derived under a fresh,
+# foreign-owned data dir (a real first deploy), which is what makes CHOWN required;
+# an already-initialised, postgres-owned volume skips the chown and needs fewer
+# startup caps. See criteria/ghcr.io/immich-app/postgres.md.
+schema_version: "1.2"
+image: ghcr.io/immich-app/postgres
+applies_to:
+  tags: ["14-vectorchord0.4.3-pgvectors0.2.0"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: ghcr.io/immich-app/postgres@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+      validated_date: "2026-07-04"
+      duration_seconds: 240
+      confidence: high
+      workload: profiles/workloads/postgres.sh
+      workload_sha256: "0e9927503276921e3a549fe815e0cd6296684a0b2f6af301df0bff7028c9bc43"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["${DB_DATA_LOCATION}:/var/lib/postgresql/data"]
+        env: [POSTGRES_PASSWORD, POSTGRES_USER, POSTGRES_DB, POSTGRES_INITDB_ARGS]
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: true, observed: "workload failed / not ready"}
+          - {removed: DAC_OVERRIDE, required: true, observed: "workload failed / not ready"}
+          - {removed: FOWNER, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: FSETID, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SETGID, required: true, observed: "workload failed / not ready"}
+          - {removed: SETUID, required: true, observed: "workload failed / not ready"}
+          - {removed: SETFCAP, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: workload passed, server uid=999 (non-root)"}

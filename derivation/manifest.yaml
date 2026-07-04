@@ -168,3 +168,20 @@ images:
       read-only-fs errors). loki is DISTROLESS, so the correctness check probes it
       from a sidecar sharing its netns, not docker exec. /loki stand-in is
       mode=1777 (loki runs as non-root uid 10001).
+
+  - profile: catalog/docker.io/grafana/alloy.yaml
+    image: docker.io/grafana/alloy
+    tag: v1.16.2
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/alloy.sh
+    note: >-
+      read_only:true, tmpfs:[] — alloy runs under --read-only with only its
+      storage.path location writable (default --storage.path=/var/lib/alloy/data;
+      the persistent WAL/state dir, NOT tmpfs). Baseline read_only + candidate /tmp;
+      drop /tmp and re-verify /-/ready + live alloy_ pipeline metrics. /tmp NOT
+      required under the default storage.path (a --storage.path=/tmp/alloy override
+      would need tmpfs:[/tmp]). alloy is DISTROLESS, so the check probes it from a
+      sidecar sharing its netns (the same helper loki uses), not docker exec. The
+      writable stand-in is mounted at the PARENT /var/lib/alloy (alloy creates the
+      data subdir itself) with mode=1777 (alloy runs as non-root uid 473).

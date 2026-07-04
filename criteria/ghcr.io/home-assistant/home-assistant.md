@@ -2,7 +2,7 @@
 
 Per-image acceptance criteria for the `ghcr.io/home-assistant/home-assistant`
 profile (Home Assistant Core, the container install). Validated against
-`…@sha256:f73512ba…` (tag `stable`), derived by drop-test against HA's **own default
+`…@sha256:f73512ba…` (tag `2026.7.1` (the `stable` release at derivation time)), derived by drop-test against HA's **own default
 invocation**. The deployment sets no `cap_drop` (its compose comment: *"tighten
 further only after verifying HA still boots"*), so HA runs on the **full Docker
 default cap set**; this profile trims it **14 → 1**.

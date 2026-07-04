@@ -186,20 +186,3 @@ images:
       writable stand-in is mounted at the PARENT /var/lib/alloy (alloy creates the
       data subdir itself) with mode=1777 (alloy runs as non-root uid 473).
 
-  - profile: catalog/docker.io/itzg/minecraft-server.yaml
-    image: docker.io/itzg/minecraft-server
-    tag: latest
-    dimension: capabilities
-    method: drop-test
-    workload: profiles/workloads/minecraft.sh
-    note: >-
-      cap_add:[SETGID, SETUID] via drop-test: baseline cap_drop:ALL + the Docker
-      default cap set on a fresh /data volume, drop each and re-verify the server
-      answers mc-monitor status as a non-root (uid 1000) process. The entrypoint
-      gosu-drops root->minecraft (SETUID/SETGID); CHOWN/DAC_OVERRIDE are NOT needed
-      (image ships /data owned by 1000, a docker volume inherits it). Server-flavour
-      independent (derived with a fast VANILLA/FLAT config). NOTE: re-derive with
-      anonymous volumes cleaned per trial (drop_test.sh rm -f -v) + adequate free
-      disk — this image downloads a jar + gens a world per trial, so leaked volumes
-      exhaust disk and yield spurious "required" verdicts.
-

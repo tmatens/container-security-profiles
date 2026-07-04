@@ -121,3 +121,19 @@ images:
       non-root-owned /config (faithful to the ./config bind); a root-owned config
       needs no caps. HA *core* only — integration-specific caps (NET_RAW ping,
       device access, NET_ADMIN) are not exercised by a base instance (see criteria).
+
+  - profile: catalog/docker.io/library/mariadb.yaml
+    image: docker.io/library/mariadb
+    tag: "11.4"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/mariadb.sh
+    note: >-
+      cap_add:[SETGID, SETUID] via drop-test: baseline cap_drop:ALL + the Docker
+      default cap set on a fresh datadir, drop each and re-verify a query round-trip
+      + a non-root (uid 999) mariadbd. The entrypoint re-execs as the mysql user via
+      gosu (SETUID/SETGID) — the only always-required step. CHOWN/DAC_OVERRIDE are
+      NOT needed by default: the image ships /var/lib/mysql owned by mysql, so a
+      docker-managed volume inherits it and the find-chown is a no-op. A foreign-owned
+      bind mount adds CHOWN (only); running as the mysql uid on a pre-owned datadir
+      shrinks it to []. Startup caps, invisible to runtime observation.

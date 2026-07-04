@@ -3,6 +3,12 @@
 # container lifetime, so it captures the startup-only caps SETUID/SETGID (the
 # root->netdata privilege drop) that runtime observation records as "unused."
 # Dropping those leaves netdata healthy while silently running as root.
+#
+# SYS_PTRACE and SYS_ADMIN were previously kept "observation-confirmed used" but
+# are over-grants for THIS image: apps.plugin is setuid-root (reads other procs'
+# /proc without SYS_PTRACE) and the image ships no ebpf.plugin (so ebpf=yes is a
+# no-op and SYS_ADMIN gates nothing). The correctness check now asserts
+# per-process io/fd data for a NON-root group, so their removal is proven safe.
 schema_version: "1.2"
 image: docker.io/netdata/netdata
 applies_to:
@@ -11,18 +17,18 @@ status: validated
 dimensions:
   capabilities:
     cap_drop: [ALL]
-    cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_ADMIN, SYS_PTRACE]
+    cap_add: [DAC_OVERRIDE, SETGID, SETUID]
     derivation:
       tool: container-sec-derive
-      tool_version: "0.6.0"
+      tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
       validated_image: docker.io/netdata/netdata@sha256:bcc822ec685dd7ee488e9f99b957f479b66301be04f13f346df692ad7de94151
-      validated_date: "2026-07-03"
-      duration_seconds: 360
+      validated_date: "2026-07-04"
+      duration_seconds: 900
       confidence: high
       workload: profiles/workloads/netdata.sh
-      workload_sha256: 998fcad60cd7bc54e17b5346f47a37ceb527ab248d3b36dd4e93e90a99a899a9
+      workload_sha256: 39892c76d36ac0649adcefed80959e6dbc45b28ba41b05ee294cbe1d0c4200cc
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -46,12 +52,21 @@ dimensions:
         env: [PGID]
       drop_test:
         checks:
+          - removed: SYS_PTRACE
+            required: false
+            observed: "correct: ready, daemon uid=201, per-process metrics collecting for non-root group (app.netdata_fds_open)"
+          - removed: SYS_ADMIN
+            required: false
+            observed: "correct: ready, daemon uid=201, per-process metrics collecting for non-root group (app.netdata_fds_open)"
+          - removed: DAC_OVERRIDE
+            required: true
+            observed: "not ready (status=exited): API/apps.plugin not up"
           - removed: CHOWN
             required: false
-            observed: "correct: ready, apps.plugin collecting, daemon uid=201"
+            observed: "correct: ready, daemon uid=201, per-process metrics collecting for non-root group (app.netdata_fds_open)"
           - removed: FOWNER
             required: false
-            observed: "correct: ready, apps.plugin collecting, daemon uid=201"
+            observed: "correct: ready, daemon uid=201, per-process metrics collecting for non-root group (app.netdata_fds_open)"
           - removed: SETUID
             required: true
             observed: "daemon running as ROOT (privilege drop failed)"

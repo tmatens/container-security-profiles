@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Correctness predicate for netdata cap_add bisection (docker.io/netdata/netdata).
+# Correctness correctness check for netdata cap_add bisection (docker.io/netdata/netdata).
 #
 # netdata is run as a host monitor — pid:host, host /proc,/sys,/var/run/docker.sock
 # read-only mounts, host network, and the granted cap set present — then each
-# candidate capability is dropped, the container restarted, and this predicate
+# candidate capability is dropped, the container restarted, and this correctness check
 # decides "still works CORRECTLY". Correctness is not just liveness: netdata must
 # still drop root -> the unprivileged `netdata` user, or the derivation is wrong.
 #

@@ -3,7 +3,7 @@
 Per-image acceptance criteria for the `docker.io/library/postgres` profile
 (compose-lint#359). Validated against `postgres:16@sha256:fe03a760…`.
 
-## Representative workload / correctness predicate
+## Representative workload / correctness check
 `profiles/workloads/postgres.sh` — connect + CREATE/INSERT/SELECT/DROP + a SIGHUP
 reload. Under the derived config it must complete cleanly.
 

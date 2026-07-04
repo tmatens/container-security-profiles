@@ -16,8 +16,8 @@ host `/proc`,`/sys`,`/var/run/docker.sock` read-only mounts, host network, and
 the full granted cap set present (a denied check is filtered, so an ungranted
 cap reads as unused).
 
-## Representative workload / correctness predicate
-`profiles/workloads/netdata.sh` — the drop-and-restart predicate. "Still works"
+## Representative workload / correctness check
+`profiles/workloads/netdata.sh` — the drop-and-restart correctness check. "Still works"
 means, per candidate cap dropped: container healthy, HTTP API up, `apps.plugin`
 (per-process, needs `SYS_PTRACE`) collecting, **and the daemon still dropped to a
 non-root uid**. Liveness alone is insufficient — netdata runs "healthy" as root

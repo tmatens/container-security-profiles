@@ -153,3 +153,18 @@ images:
       it is used only by runtime plugin installation, the elasticsearch plugin, and
       rendering/export (add tmpfs:[/tmp] for those). Confidence moderate — grafana's
       feature surface exceeds this workload's coverage (see criteria).
+
+  - profile: catalog/docker.io/grafana/loki.yaml
+    image: docker.io/grafana/loki
+    tag: "3.7.2"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/loki.sh
+    note: >-
+      read_only:true, tmpfs:[] — loki runs under --read-only with only its /loki
+      data dir (persistent: chunks/WAL/index/rules, NOT tmpfs) writable. Baseline
+      read_only + candidate /tmp; drop /tmp and re-verify loki reaches /ready + a
+      log push (204) + a query round-trip returns the line. /tmp NOT required (zero
+      read-only-fs errors). loki is DISTROLESS, so the correctness check probes it
+      from a sidecar sharing its netns, not docker exec. /loki stand-in is
+      mode=1777 (loki runs as non-root uid 10001).

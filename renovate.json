@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "Automerge low-risk GitHub Actions bumps. Actions are SHA-pinned and the validate workflow gates every PR; minor/patch/digest carry no behavior change. Majors stay manual.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "automerge": true
+    },
+    {
+      "description": "Automerge minor/patch bumps of the validator's only runtime libs (jsonschema, PyYAML in requirements.txt). Majors stay manual.",
+      "matchManagers": ["pip_requirements"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "NEVER touch the catalog profiles. A profile's pinned validated_image (and applies_to.digests) is derivation EVIDENCE — the exact artifact the minimum was validated against — not a dependency to keep fresh. Digest freshness is handled deliberately by scripts/check_staleness.py + re-derivation on the BPF runner, never by a dep-bumper. Defensive fence: keep catalog/** off-limits to every manager.",
+      "matchFileNames": ["catalog/**"],
+      "enabled": false
+    }
+  ]
+}

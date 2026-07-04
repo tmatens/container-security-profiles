@@ -202,3 +202,20 @@ images:
       anonymous volumes cleaned per trial (drop_test.sh rm -f -v) + adequate free
       disk — this image downloads a jar + gens a world per trial, so leaked volumes
       exhaust disk and yield spurious "required" verdicts.
+
+  - profile: catalog/docker.io/itzg/mc-backup.yaml
+    image: docker.io/itzg/mc-backup
+    tag: latest
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/mc-backup.sh
+    note: >-
+      cap_add:[DAC_OVERRIDE] via an IN-STACK drop-test (the first dependent-tier
+      profile). The csd spec brings minecraft up as `deps:[minecraft]` and shares its
+      /data via `run.volumes_from:[minecraft]`; mc-backup RCON-flushes minecraft and
+      tars the shared /data. Correctness requires a REAL backup (>=5 world entries),
+      not just a file — mc-backup runs as root and without DAC_OVERRIDE produces a
+      0-entry empty tar of the unreadable uid-1000 /data. Only DAC_OVERRIDE is
+      required; the commonly-declared [SETUID,SETGID] is wrong (no drop -> empty
+      backups). Re-derive on the BPF/derive host with docker; needs minecraft as a
+      dep.

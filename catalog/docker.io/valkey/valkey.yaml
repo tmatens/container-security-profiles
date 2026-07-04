@@ -1,0 +1,61 @@
+# valkey (redis-compatible) — minimum capabilities, derived by drop-test against
+# immich's deployment invocation (valkey is immich's redis).
+#
+# capabilities: cap_drop:[ALL] + cap_add:[SETGID, SETUID]. Both are STARTUP caps:
+# the entrypoint starts as root and drops to the valkey user (uid 999) via
+# `setpriv` — dropping either fails with "setpriv: setresuid/setresgid failed" and
+# the container exits. The declared cap_add additionally grants CHOWN, a genuine
+# over-grant under this invocation: with no data volume, valkey uses the image's
+# own pre-owned /data, so nothing is chowned (see the criteria doc's drop-test
+# evidence). A deployment that binds a foreign-owned data volume would need CHOWN
+# back — the minimum is scoped to the invocation in run_config.
+schema_version: "1.2"
+image: docker.io/valkey/valkey
+applies_to:
+  tags: ["9"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/valkey/valkey@sha256:4963247afc4cd33c7d3b2d2816b9f7f8eeebab148d29056c2ca4d7cbc966f2d9
+      validated_date: "2026-07-04"
+      duration_seconds: 120
+      confidence: high
+      workload: profiles/workloads/valkey.sh
+      workload_sha256: "9620a73fa518820c0325a703f42ec4f4ded6af0cde13c620aa1dfaa7b8b067ed"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: FOWNER, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: FSETID, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: SETGID, required: true, observed: "container failed to start: setpriv: setresgid failed: Operation not permitted"}
+          - {removed: SETUID, required: true, observed: "container exited: setpriv: setresuid failed: Operation not permitted"}
+          - {removed: SETFCAP, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: PING + SET/GET, server uid=999 (non-root)"}

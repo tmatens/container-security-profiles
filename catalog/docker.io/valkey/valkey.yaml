@@ -9,11 +9,23 @@
 # own pre-owned /data, so nothing is chowned (see the criteria doc's drop-test
 # evidence). A deployment that binds a foreign-owned data volume would need CHOWN
 # back — the minimum is scoped to the invocation in run_config.
-schema_version: "1.2"
+schema_version: "1.3"
 image: docker.io/valkey/valkey
 applies_to:
   tags: ["9"]
 status: validated
+app_tier_verified:
+  service: immich
+  service_version: v2.7.5
+  method: container-sec-derive scripts/apptier_verify.sh
+  check: >-
+    immich's released stack brought up with redis hardened to this minimum
+    (alongside the hardened postgres), driven via immich's real REST API — admin
+    sign-up, login, upload a photo, read it back, metadata search — all passing.
+    (The stack's app-tier check is shown to catch a too-tight config by
+    over-hardening a leaf; see the postgres profile's over_hardening evidence.)
+  verified_date: "2026-07-04"
+  result: pass
 dimensions:
   capabilities:
     cap_drop: [ALL]

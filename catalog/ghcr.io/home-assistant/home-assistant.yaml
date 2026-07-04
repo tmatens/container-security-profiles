@@ -1,0 +1,69 @@
+# Home Assistant — minimum Linux capabilities, derived by drop-test against HA's
+# own default invocation (the deployment sets no cap_drop — its compose comment:
+# "tighten further only after verifying HA still boots"). This profile trims the
+# full Docker default cap set 14 -> 1.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[DAC_OVERRIDE]. HA runs
+# `python3 -m homeassistant` under s6 AS ROOT — there is no privilege drop and no
+# chown in init, so no SETUID/SETGID/CHOWN startup step. The single cap HA CORE
+# needs comes from WHERE it writes: the `/config` dir is a bind owned by the deploy
+# user (non-root), and HA-as-root creating its DB / .storage / logs there needs
+# DAC_OVERRIDE. Derived under a fresh, NON-root-owned /config, faithful to the
+# deployment — against a root-owned /config (e.g. a named volume) HA needs NO caps
+# at all (cap_add: []). See criteria/ghcr.io/home-assistant/home-assistant.md.
+#
+# SCOPE: this is HA *core* on a base config. Capabilities pulled in by specific
+# integrations — NET_RAW (ICMP ping), device access (USB/Bluetooth/Zigbee),
+# NET_ADMIN (some network integrations) — are NOT exercised by a base instance and
+# are documented as extensions in the criteria doc. The per-deployment re-derivation
+# against a real ./config is the faithful surface for an integration-heavy install.
+schema_version: "1.3"
+image: ghcr.io/home-assistant/home-assistant
+applies_to:
+  tags: ["stable"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: ghcr.io/home-assistant/home-assistant@sha256:f73512ba4fe06bb4d57636fe3578d0820cdec46f81e8f837ab59e451662ff3cb
+      validated_date: "2026-07-04"
+      duration_seconds: 101
+      confidence: high
+      workload: profiles/workloads/home-assistant.sh
+      workload_sha256: "ec8142869c48d0d292d9041eea84a2cbebc9256b39fdce1767fbf0aa461730f5"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["./config:/config"]
+        env: [TZ]
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: DAC_OVERRIDE, required: true, observed: "container exited: HA could not write its DB/.storage/logs into the non-root-owned /config"}
+          - {removed: FSETID, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: FOWNER, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: MKNOD, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: NET_RAW, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: SETGID, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: SETUID, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: SETFCAP, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: SETPCAP, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: KILL, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}

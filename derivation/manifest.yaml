@@ -105,3 +105,19 @@ images:
       (per-connection privsep chroot). SYS_CHROOT is the coverage sharp edge — a
       web-only check reports 200 while git-over-SSH is dead, so the workload
       exercises SSH. All five are startup caps, invisible to runtime observation.
+
+  - profile: catalog/ghcr.io/home-assistant/home-assistant.yaml
+    image: ghcr.io/home-assistant/home-assistant
+    tag: stable
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/home-assistant.sh
+    note: >-
+      cap_add:[DAC_OVERRIDE] via drop-test: baseline cap_drop:ALL + the Docker
+      default cap set, drop each and re-verify HA reaches onboarding + creates the
+      owner user. HA runs python3 -m homeassistant under s6 AS ROOT (no privilege
+      drop, no chown), so the only cap it needs is DAC_OVERRIDE — root writing its
+      DB/.storage/logs into a NON-root-owned /config bind. Derived under a fresh,
+      non-root-owned /config (faithful to the ./config bind); a root-owned config
+      needs no caps. HA *core* only — integration-specific caps (NET_RAW ping,
+      device access, NET_ADMIN) are not exercised by a base instance (see criteria).

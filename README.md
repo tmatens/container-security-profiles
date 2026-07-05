@@ -14,7 +14,8 @@ ADR-017 §7 — deliberately *not* bundled in the compose-lint wheel.
 ## Relationship to compose-lint (contract-only)
 
 This catalog is tied to compose-lint by **one thing: the versioned profile
-schema** (`schema_version`, currently `1.0`). Nothing else:
+schema** (`schema_version`; profiles in this catalog currently declare
+`1.2`–`1.3`). Nothing else:
 
 - **Not bundled** — compose-lint ships the schema + loader + validator; it does
   not ship profiles. A user opts in by pointing compose-lint's `profiles.path`
@@ -32,17 +33,29 @@ and compose-lint is the first consumer, not the only possible one.
 
 ## Layout
 
-- `catalog/<image>.yaml` — **validated** profiles (cleared the acceptance
-  contract *and* the ci-smoke gate).
-- `catalog/exploratory/<image>.yaml` — **exploratory** drafts (below the bar;
-  advisory only, never used for conformance).
+Catalog and criteria paths are **registry-namespaced**
+(`<registry>/<org>/<image>`), mirroring the fully-qualified image reference.
+
+- `catalog/<registry>/<org>/<image>.yaml` — **validated** profiles (cleared the
+  acceptance contract *and* the ci-smoke gate), e.g.
+  `catalog/docker.io/library/postgres.yaml`.
+- `catalog/exploratory/<registry>/<org>/<image>.yaml` — **exploratory** drafts
+  (below the bar; advisory only, never used for conformance). The tier exists
+  for external contributions awaiting reproduction; none are committed yet.
+- `criteria/<registry>/<org>/<image>.md` — per-image scenarios + pass criteria
+  (compose-lint#359), mirroring the catalog path.
 - `profiles/workloads/<name>.sh` — the committed exerciser scripts profiles pin
   by `workload_sha256`.
-- `criteria/<image>.md` — per-image scenarios + pass criteria (compose-lint#359).
+- `derivation/manifest.yaml` — the re-derivation spec (compose-lint#360): how to
+  re-derive each profile representatively (image, tag, dimension, `method`,
+  workload). Consumed by container-sec-derive's derive loop on the self-hosted
+  BPF runner (see Freshness below).
 - `contract/compose-lint.ref` — the pinned compose-lint commit whose schema +
   validator this catalog conforms to.
 - `scripts/fetch-contract.sh` — fetches that pinned schema + validator into
   `.contract/` (gitignored).
+- `scripts/check_staleness.py` — the registry-only digest-drift check that backs
+  the `staleness` workflow (see Freshness below).
 
 ## Validation
 
@@ -51,10 +64,24 @@ pip install -r requirements.txt
 make validate        # fetches the pinned contract, then validates the catalog
 ```
 
-CI runs the same on every PR (`.github/workflows/validate.yml`). A `validated`
-profile must be schema-valid, digest-pinned, backed by a committed +
-hash-verified workload, confidence ≥ moderate, duration ≥ 300s, and assert
-`validated_via: [bpf-observation, ci-smoke]`.
+CI runs the same on every PR and push to main
+(`.github/workflows/validate.yml`). Every `validated` profile must be
+schema-valid, digest-pinned (`validated_image: …@sha256:…`), backed by a
+committed + hash-verified workload (`workload_sha256`), have confidence ≥
+moderate, and pin only **immutable version tags** in `applies_to.tags` — a
+mutable rolling tag (`latest`, `stable`, `edge`, `main`, `nightly`, …) points at
+a different image over time, so a profile derived against it is meaningless. The
+remaining evidence bar depends on how the minimum was observed:
+
+- **`drop-test`** (remove each candidate, restart, verify the container breaks
+  without it) — asserts `validated_via: [drop-test, ci-smoke]` and must carry a
+  `derivation.drop_test` evidence block; no duration floor, since it is not a
+  timed observation. This is how the whole current catalog is derived: it catches
+  the startup-only minimums (a socket dir's tmpfs, a root→user privilege drop's
+  SETUID/SETGID) that live runtime observation is blind to.
+- **`bpf-observation`** (live eBPF observation over a running workload) — asserts
+  `validated_via: [bpf-observation, ci-smoke]` and requires
+  `duration_seconds ≥ 300`.
 
 ## Trust model (ADR-017 §7)
 
@@ -84,9 +111,10 @@ This runs in two parts, split by cost:
   `ig`, so this runs on the **self-hosted BPF runner** — where GitHub bills **no
   Actions minutes** (self-hosted runners are free). It belongs **in this repo**,
   on a shared/org-level self-hosted runner, so it updates profiles **in place**
-  (no cross-repo token). It reproduces each image's representative runtime config,
-  re-derives, re-validates, and bumps the pinned digest + `validated_date`. Not
-  yet wired — the trigger above is part 1.
+  (no cross-repo token). It reproduces each image's representative runtime config
+  (per `derivation/manifest.yaml`), re-derives, re-validates, and bumps the
+  pinned digest + `validated_date`. The re-derivation spec is committed; the
+  runner loop that consumes it is not yet wired — the trigger above is part 1.
 
 Cost note: only hosted runners consume this private repo's Actions-minute quota,
 and only the light `validate` + `staleness` jobs use them (both seconds-scale).

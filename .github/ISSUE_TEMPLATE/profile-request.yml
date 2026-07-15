@@ -1,0 +1,47 @@
+name: Profile request
+description: Ask for a minimum-security profile for a container image
+title: "Profile request: <image>"
+labels: []
+body:
+  - type: input
+    id: image
+    attributes:
+      label: Image
+      description: Fully-qualified reference (registry/org/image)
+      placeholder: docker.io/library/redis
+    validations:
+      required: true
+  - type: input
+    id: tag
+    attributes:
+      label: Immutable tag
+      description: A pinned version tag (not latest/stable/rolling-major)
+      placeholder: "8.0.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: dimension
+    attributes:
+      label: Dimension
+      multiple: true
+      options:
+        - capabilities (cap_drop/cap_add)
+        - filesystem (read_only/tmpfs)
+    validations:
+      required: true
+  - type: textarea
+    id: invocation
+    attributes:
+      label: How you run it
+      description: >-
+        Compose snippet or docker run line — user:, volumes, env (names only,
+        never values), entrypoint/command overrides. The minimum depends on
+        the invocation, so this is what the derivation reproduces.
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Known privileged behaviors, init/chown steps, health checks…

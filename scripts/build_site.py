@@ -108,9 +108,10 @@ def page(title, body, root, generated, commit):
 <footer>
 Generated {esc(generated)} from <a href="{REPO_URL}/tree/{esc(commit)}">{esc(commit[:12])}</a>.
 Profiles are minimums for the recorded invocation and workload — read each
-profile's criteria before adopting. Derived by
-<a href="https://github.com/tmatens/container-sec-derive">container-sec-derive</a>,
-consumed by <a href="https://github.com/tmatens/compose-lint">compose-lint</a>.
+profile's criteria before adopting. Derived by container-sec-derive (csd, not
+yet published — each profile carries the evidence to reproduce it), consumed by
+<a href="https://github.com/tmatens/compose-lint">compose-lint</a>.
+Wrong for your deployment? <a href="{REPO_URL}/issues/new?template=profile-mismatch.yml">Report a mismatch</a>.
 </footer>
 </main>
 </body>
@@ -362,13 +363,16 @@ def render_index(profiles, generated, commit):
     body = f"""
 <h1>Container security profiles</h1>
 <p class="lead">Evidence-backed <strong>minimum-security profiles for container images</strong> —
-the capabilities, read-only-filesystem, device, and egress config each image actually
-needs, derived by <a href="https://github.com/tmatens/container-sec-derive">container-sec-derive</a>
-(drop-test + live eBPF observation) and consumed by
+the capabilities and read-only-filesystem config each image actually needs, derived by
+drop-test and live eBPF observation (container-sec-derive) and consumed by
 <a href="https://github.com/tmatens/compose-lint">compose-lint</a> as fix-guidance enrichment.</p>
 <p class="muted">{n_validated} validated profiles. Every profile is digest-pinned, backed by a
 committed workload, and carries its full derivation evidence — click through for the
-drop-test table, recorded invocation, and validation criteria.</p>
+drop-test table, recorded invocation, and validation criteria. Confidence:
+<span class="badge ok">high</span> = the workload deterministically exercises the derived
+surface; <span class="badge warn">moderate</span> = the image's feature surface is larger
+than any workload can bound — read the criteria for what's covered.
+Missing an image? <a href="{REPO_URL}/issues/new?template=profile-request.yml">Request a profile</a>.</p>
 <input id="filter" type="search" placeholder="Filter — image, capability, dimension…" aria-label="Filter profiles">
 <div class="tablewrap">
 <table class="catalog">
@@ -382,9 +386,9 @@ drop-test table, recorded invocation, and validation criteria.</p>
 <code>run_config</code> block) exercised by the <strong>committed workload</strong> — not a
 universal truth about the image. Startup-only needs (a data-dir <code>chown</code>, a
 root→user privilege drop) are derived by drop-test, which catches what runtime
-observation is blind to. Read the criteria doc before adopting a profile, and prefer
-re-deriving against your own compose file with
-<a href="https://github.com/tmatens/container-sec-derive"><code>csd deploy-check</code></a>.</p>
+observation is blind to. Read the criteria doc before adopting a profile — and if it
+breaks your deployment, that's signal:
+<a href="{REPO_URL}/issues/new?template=profile-mismatch.yml">report the mismatch</a>.</p>
 <script>{FILTER_JS}</script>
 """
     return page("Container security profiles — catalog", body, "", generated, commit)

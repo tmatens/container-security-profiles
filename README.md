@@ -1,82 +1,141 @@
 # container-security-profiles
 
-Evidence-backed **minimum-security profiles for container images** — the observed
-capabilities, read-only-filesystem, device, and egress config each image
-actually needs. Profiles are derived by
-[container-sec-derive](https://github.com/tmatens/container-sec-derive) (csd)
-from live eBPF observation (and, for `cap_add`, bisection) and are consumed by
-[compose-lint](https://github.com/tmatens/compose-lint) as fix-guidance
-enrichment.
+[![validate](https://github.com/tmatens/container-security-profiles/actions/workflows/validate.yml/badge.svg)](https://github.com/tmatens/container-security-profiles/actions/workflows/validate.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This is the **external, automation-maintained catalog** described in compose-lint
-ADR-017 §7 — deliberately *not* bundled in the compose-lint wheel.
+**Evidence-backed minimum-security profiles for container images** — the
+capabilities and read-only-filesystem config each image *actually needs*,
+derived by removing privileges one at a time and proving the container breaks
+without them. Not guidance copied from a blog post: every profile is
+digest-pinned, backed by a committed workload script, and carries its full
+derivation evidence in the file.
 
-## Relationship to compose-lint (contract-only)
+For example, immich ships its postgres with `cap_add` including `FOWNER` — the
+derived, drop-tested minimum is four capabilities, and `FOWNER` is a genuine
+over-grant:
 
-This catalog is tied to compose-lint by **one thing: the versioned profile
-schema** (`schema_version`; profiles in this catalog currently declare
-`1.2`–`1.3`). Nothing else:
+```yaml
+services:
+  postgres:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
+```
 
-- **Not bundled** — compose-lint ships the schema + loader + validator; it does
-  not ship profiles. A user opts in by pointing compose-lint's `profiles.path`
-  at a catalog they trust (off by default).
-- **Not vendored** — this repo does not keep a copy of the schema or validator.
-  CI fetches them from a **pinned compose-lint commit** (`contract/compose-lint.ref`)
-  at validation time, so there is no silent drift and no code dependency. Bump
-  the ref to adopt a new schema version, deliberately.
-- **One-directional** — data flows csd *derives* → this catalog *stores* →
-  compose-lint (or any schema-conforming tool) *consumes*. compose-lint has no
-  dependency on this repo.
+## The catalog
 
-The name is consumer-neutral on purpose: these are container security profiles,
-and compose-lint is the first consumer, not the only possible one.
+| Image | Tags | Dimension | Minimum | Confidence |
+|---|---|---|---|---|
+| `codeberg.org/forgejo/forgejo` | `15` | capabilities | `cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT]` | high |
+| `docker.io/grafana/alloy` | `v1.16.2` | filesystem | `read_only: true` | high |
+| `docker.io/grafana/grafana` | `13.0.2` | filesystem | `read_only: true` | moderate |
+| `docker.io/grafana/loki` | `3.7.2` | filesystem | `read_only: true` | high |
+| `docker.io/library/caddy` | `2` | capabilities | `cap_add: [NET_BIND_SERVICE]` | high |
+| `docker.io/library/caddy` | `2` | filesystem | `read_only: true` | high |
+| `docker.io/library/mariadb` | `11.4` | capabilities | `cap_add: [SETGID, SETUID]` | high |
+| `docker.io/library/postgres` | `16` | capabilities | `cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` | high |
+| `docker.io/library/postgres` | `16` | filesystem | `read_only: true, tmpfs: [/run/postgresql]` | high |
+| `docker.io/netdata/netdata` | `v2.10.3` | capabilities | `cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | high |
+| `docker.io/valkey/valkey` | `9` | capabilities | `cap_add: [SETGID, SETUID]` | high · app-tier ✓ |
+| `ghcr.io/gethomepage/homepage` | `v1.13.2` | filesystem | `read_only: true, tmpfs: [/app/.next/cache]` | high |
+| `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | capabilities | `cap_add: [DAC_OVERRIDE]` | high |
+| `ghcr.io/immich-app/postgres` | `14-vectorchord…` | capabilities | `cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` | high · app-tier ✓ |
+
+All capability profiles are `cap_drop: [ALL]` plus the listed `cap_add`.
+The **[browsable catalog site](https://tmatens.github.io/container-security-profiles/)**
+renders every profile with its copy-paste snippet, drop-test evidence table,
+recorded invocation, and criteria — or read the YAML directly under
+[`catalog/`](catalog/).
+
+Want an image added? [Request a profile](../../issues/new?template=profile-request.yml).
+
+## Using a profile
+
+**Directly:** copy the dimension into your compose file (each profile page on
+the site has a ready snippet). One caveat that matters: a profile is the
+minimum **for the recorded invocation** — the `run_config` block in the
+profile. A different `user:`, a pre-initialised vs fresh data volume, or an
+entrypoint override changes the minimum. Read the profile's `criteria/` doc
+before adopting; if a profile breaks your deployment,
+[report the mismatch](../../issues/new?template=profile-mismatch.yml).
+
+**Via compose-lint** (opt-in, experimental preview): point
+[compose-lint](https://github.com/tmatens/compose-lint) ≥ 0.13 at a clone of
+this catalog and its findings gain image-specific guidance:
+
+```yaml
+# .compose-lint.yml
+profiles:
+  enabled: true
+  path: /path/to/container-security-profiles/catalog
+```
+
+```
+CL-0006  Service does not drop all capabilities. …
+    fix: …
+    profile hint (csd-derived, confidence high, from docker.io/library/postgres@sha256:fe03a76…,
+    tag match — compose-lint can't see your runtime, confirm it fits your setup):
+    observed minimum is cap_drop: [ALL] + cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
+```
+
+Enrichment is advisory only — it never creates, drops, or reclassifies a
+finding, and only `validated` profiles are consumed.
+
+## Why trust these profiles
+
+Every `validated` profile clears a machine-checked bar (CI runs it on every
+change; `make validate` runs the same locally):
+
+- **Schema-valid** against the versioned compose-lint profile schema, fetched
+  from a pinned compose-lint commit (`contract/compose-lint.ref`) at
+  validation time — no vendored copy to drift.
+- **Digest-pinned**: `validated_image` records the exact `…@sha256:…` the
+  evidence was produced against, and `applies_to.tags` may pin only
+  **immutable version tags** — a profile derived against `latest` is
+  meaningless.
+- **Workload-backed**: the exerciser script is committed under
+  [`profiles/workloads/`](profiles/workloads/) and hash-verified
+  (`workload_sha256`). Workloads exercise the image's real function and assert
+  privilege drops (a health check alone is not enough).
+- **Evidence in-file**, per derivation method:
+  - **drop-test** — every granted element removed in turn, the container
+    restarted, the workload re-verified; the per-element results are the
+    `drop_test.checks` table in the profile. This catches *startup-only*
+    minimums (a data-dir `chown`, a root→user privilege drop) that runtime
+    observation is structurally blind to. The whole current catalog is derived
+    this way.
+  - **bpf-observation** — live eBPF observation over a running workload,
+    ≥ 300 s.
+- **App-tier verified** (where marked): the hardening was additionally proven
+  at the *service* level — the full stack brought up with the minimum applied
+  and driven through its real API, including an over-hardening probe showing
+  the check catches a too-tight config.
+- **Freshness-tracked**: a weekly `staleness` workflow compares each pinned
+  digest to the tag's currently published digest and opens a tracking issue on
+  drift, flagging the profile for re-derivation.
+
+**Trust model:** endorsed (`validated`) profiles are ones maintainer
+automation derives and can re-derive. External contributions land as
+`exploratory` (advisory only, never used for enrichment) until reproduced —
+see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Layout
 
-Catalog and criteria paths are **registry-namespaced**
+Catalog and criteria paths are registry-namespaced
 (`<registry>/<org>/<image>`), mirroring the fully-qualified image reference.
 
-- `catalog/<registry>/<org>/<image>.yaml` — **validated** profiles (cleared the
-  acceptance contract *and* the ci-smoke gate), e.g.
-  `catalog/docker.io/library/postgres.yaml`.
-- `catalog/exploratory/<registry>/<org>/<image>.yaml` — **exploratory** drafts
-  (below the bar; advisory only, never used for conformance). The tier exists
-  for external contributions awaiting reproduction; none are committed yet.
-- `criteria/<registry>/<org>/<image>.md` — per-image scenarios + pass criteria
-  (compose-lint#359), mirroring the catalog path.
-- `profiles/workloads/<name>.sh` — the committed exerciser scripts profiles pin
-  by `workload_sha256`.
-- `derivation/manifest.yaml` — the re-derivation spec (compose-lint#360): how to
-  re-derive each profile representatively (image, tag, dimension, `method`,
-  workload). Consumed by container-sec-derive's derive loop on the self-hosted
-  BPF runner (see Freshness below).
-- `contract/compose-lint.ref` — the pinned compose-lint commit whose schema +
-  validator this catalog conforms to.
-- `scripts/fetch-contract.sh` — fetches that pinned schema + validator into
-  `.contract/` (gitignored).
-- `scripts/check_staleness.py` — the registry-only digest-drift check that backs
-  the `staleness` workflow (see Freshness below).
-
-## Browsing the catalog (GitHub Pages)
-
-`scripts/build_site.py` renders the catalog as a static site — an index of every
-profile (image, dimension, minimum, confidence, app-tier badge) with per-profile
-evidence pages (compose-ready snippet, drop-test table, recorded `run_config`,
-embedded workload script) and the rendered criteria docs.
-
-```sh
-pip install -r requirements-site.txt
-make site            # builds into _site/
-python -m http.server -d _site   # local preview
-```
-
-Deployment (`.github/workflows/pages.yml`) is **gated off by default**: a Pages
-site is publicly reachable even from a private repository, so publishing is the
-same public-exposure decision as making the repo public. To go live, set the
-repository variable `PUBLISH_PAGES=true` and enable Pages (Settings → Pages →
-Source: **GitHub Actions**). Until then the workflow is skipped and costs no
-Actions minutes; the `validate` workflow still smoke-builds the generator on
-every PR so it can't rot.
+- `catalog/….yaml` — validated profiles; `catalog/exploratory/…` — drafts
+  below the promotion bar.
+- `criteria/….md` — per-image scenarios and pass criteria.
+- `profiles/workloads/*.sh` — the committed exerciser scripts.
+- `derivation/manifest.yaml` — the re-derivation spec: how to re-derive each
+  profile representatively (image, dimension, method, workload).
+- `contract/compose-lint.ref` + `scripts/fetch-contract.sh` — the pinned
+  schema/validator contract (fetched into `.contract/`, gitignored).
+- `scripts/check_staleness.py` — the registry-only digest-drift check.
+- `scripts/build_site.py` — the static catalog-site generator
+  (`make site`; deployed by `.github/workflows/pages.yml`).
 
 ## Validation
 
@@ -85,59 +144,35 @@ pip install -r requirements.txt
 make validate        # fetches the pinned contract, then validates the catalog
 ```
 
-CI runs the same on every PR and push to main
-(`.github/workflows/validate.yml`). Every `validated` profile must be
-schema-valid, digest-pinned (`validated_image: …@sha256:…`), backed by a
-committed + hash-verified workload (`workload_sha256`), have confidence ≥
-moderate, and pin only **immutable version tags** in `applies_to.tags` — a
-mutable rolling tag (`latest`, `stable`, `edge`, `main`, `nightly`, …) points at
-a different image over time, so a profile derived against it is meaningless. The
-remaining evidence bar depends on how the minimum was observed:
+CI runs the same on every PR and push to main, plus a smoke build of the
+catalog site.
 
-- **`drop-test`** (remove each candidate, restart, verify the container breaks
-  without it) — asserts `validated_via: [drop-test, ci-smoke]` and must carry a
-  `derivation.drop_test` evidence block; no duration floor, since it is not a
-  timed observation. This is how the whole current catalog is derived: it catches
-  the startup-only minimums (a socket dir's tmpfs, a root→user privilege drop's
-  SETUID/SETGID) that live runtime observation is blind to.
-- **`bpf-observation`** (live eBPF observation over a running workload) — asserts
-  `validated_via: [bpf-observation, ci-smoke]` and requires
-  `duration_seconds ≥ 300`.
+## Relationship to compose-lint
 
-## Trust model (ADR-017 §7)
+This is the external profile catalog described in compose-lint
+[ADR-017](https://github.com/tmatens/compose-lint/blob/main/docs/adr/017-security-profile-catalog.md):
+the two are tied by exactly one thing — the versioned profile schema.
+compose-lint ships the schema, loader, and validator but **no profiles**; this
+catalog ships profiles but no code dependency. Data flows one way (catalog →
+consumer), and consumption is opt-in. The name is consumer-neutral on purpose:
+compose-lint is the first consumer, not the only possible one.
 
-Endorsed profiles are ones maintainer automation derives and can **re-derive**.
-External contributions are `exploratory` until reproduced. A representative
-workload and committed per-image criteria are required for promotion to
-`validated`.
+## How profiles are derived
 
-## Deriving a profile
+Profiles are derived by **container-sec-derive (csd)** — a runtime tool that
+observes a running container via eBPF (capabilities, filesystem writes,
+devices, egress) and drop-tests candidate minimums against a real workload.
+csd is not yet published; until it is, every profile carries enough evidence
+(`run_config`, workload script, per-element drop-test results) to reproduce
+the derivation with any harness: apply the profile, run the workload, remove
+one element, watch it break.
 
-See container-sec-derive's `docs/field-results.md` for worked examples
-(postgres, netdata, homepage) and `--format compose-lint-profile`.
+## Contributing
 
-## Freshness & re-derivation (compose-lint#360)
+Profile requests, mismatch reports, and profile contributions are all
+welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Security policy:
+[SECURITY.md](SECURITY.md).
 
-Profiles are pinned to an exact `image@sha256:…`; when upstream republishes the
-tag, the profile is derived against a superseded artifact and must be re-derived.
-This runs in two parts, split by cost:
+## License
 
-- **Trigger — `staleness` workflow (this repo, hosted, weekly).** Registry-only
-  (no docker, no BPF, no secret): compares each profile's pinned digest to the
-  tag's current published digest and opens a tracking issue on drift. Seconds of
-  runtime — negligible Actions minutes. Run it ad-hoc via `workflow_dispatch` or
-  `python scripts/check_staleness.py`.
-- **Re-derivation — the heavy loop (self-hosted BPF runner).** Spinning the
-  container, `csd` eBPF observation, and cap bisection need root + `--pid=host` +
-  `ig`, so this runs on the **self-hosted BPF runner** — where GitHub bills **no
-  Actions minutes** (self-hosted runners are free). It belongs **in this repo**,
-  on a shared/org-level self-hosted runner, so it updates profiles **in place**
-  (no cross-repo token). It reproduces each image's representative runtime config
-  (per `derivation/manifest.yaml`), re-derives, re-validates, and bumps the
-  pinned digest + `validated_date`. The re-derivation spec is committed; the
-  runner loop that consumes it is not yet wired — the trigger above is part 1.
-
-Cost note: only hosted runners consume this private repo's Actions-minute quota,
-and only the light `validate` + `staleness` jobs use them (both seconds-scale).
-The expensive derivation is free on the self-hosted runner. (Making the repo
-public would remove the hosted-minute cost entirely.)
+[MIT](LICENSE). Profiles are data — reuse them freely with attribution.

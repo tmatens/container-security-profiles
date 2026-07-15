@@ -1,0 +1,65 @@
+# redis — minimum capabilities, derived by drop-test against the default
+# (root-then-drop) invocation.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[SETGID, SETUID]. Both are STARTUP caps:
+# the entrypoint starts as root and re-execs the server as the redis user
+# (uid 999). The failure mode when either is dropped is the sharp edge: redis
+# does NOT crash — it keeps serving correctly AS ROOT. Only the correctness
+# check's non-root uid assertion catches it; a health/round-trip-only workload
+# would falsely derive both as removable (same shape as valkey, same lesson).
+#
+# run_config is the image default: no user: override, no data bind (the image's
+# own /data anonymous volume, initialised redis-owned, so nothing is chowned).
+# A deployment binding a foreign-owned data volume would need CHOWN back — the
+# minimum is scoped to the invocation in run_config. See
+# criteria/docker.io/library/redis.md.
+schema_version: "1.3"
+image: docker.io/library/redis
+applies_to:
+  tags: ["8.2.7"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/redis@sha256:d30960f73a599496d8b2802c97758bab6b1cd421fd06337f837779c47a57e1f3
+      validated_date: "2026-07-14"
+      duration_seconds: 47
+      confidence: high
+      workload: profiles/workloads/redis.sh
+      workload_sha256: "c90e93dc8f7ff569b77a982f95c2df7931e8233b4491f5bde2d71a56b4982fc7"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: FSETID, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: FOWNER, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: SETGID, required: true, observed: "redis-server running as ROOT or not found: uid=0"}
+          - {removed: SETUID, required: true, observed: "redis-server running as ROOT or not found: uid=0"}
+          - {removed: SETFCAP, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: SET/GET + SAVE ok, redis-server uid=999 (non-root)"}

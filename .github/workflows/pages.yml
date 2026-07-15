@@ -9,6 +9,8 @@ name: pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '47 6 * * 1'   # weekly, ~30m after the staleness check — refresh the pin-freshness badges
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,9 +27,11 @@ jobs:
         with:
           python-version: '3.14'
       - run: pip install -r requirements-site.txt
+      - name: compute pin freshness (best-effort — never gates the build)
+        run: python scripts/check_staleness.py --catalog-dir catalog --json freshness.json || true
       - name: build site
         run: |
-          python scripts/build_site.py --out _site > out.log 2>&1 && rc=0 || rc=$?
+          python scripts/build_site.py --out _site --freshness freshness.json > out.log 2>&1 && rc=0 || rc=$?
           cat out.log; exit $rc
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

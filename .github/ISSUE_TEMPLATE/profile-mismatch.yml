@@ -1,0 +1,50 @@
+name: Profile mismatch
+description: A profile's minimum broke your deployment (or grants too much)
+title: "Profile mismatch: <image>"
+labels: []
+body:
+  - type: input
+    id: profile
+    attributes:
+      label: Profile
+      description: Catalog path of the profile you applied
+      placeholder: catalog/docker.io/library/postgres.yaml
+    validations:
+      required: true
+  - type: input
+    id: image
+    attributes:
+      label: Your image (tag and, if known, digest)
+      placeholder: "postgres:16 @sha256:…"
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Direction
+      options:
+        - Too tight — my container broke with the profile applied
+        - Too loose — evidence a granted element is unnecessary
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: What happened
+      description: >-
+        Error/log lines, which capability or path you had to restore to make
+        it work (bisecting one element at a time is the most useful signal).
+    validations:
+      required: true
+  - type: textarea
+    id: invocation
+    attributes:
+      label: How your invocation differs from the profile's run_config
+      description: >-
+        Compare against the profile's derivation.run_config: user:, volumes and
+        their ownership/freshness, entrypoint/command, env (names only). Most
+        mismatches come from a different invocation, e.g. a fresh vs
+        pre-initialised data volume.
+      render: yaml
+    validations:
+      required: true

@@ -1,9 +1,8 @@
 # Build + deploy the catalog-browsing site to GitHub Pages.
 #
 # GATED: both jobs are skipped unless the repository variable PUBLISH_PAGES is
-# "true". A Pages site is PUBLICLY reachable even from a private repository, so
-# publishing is the same public-exposure act as flipping the repo public and is
-# held behind the same decision. To go live: set the repo variable
+# "true", so deploying the site is a deliberate act (a Pages site is publicly
+# reachable regardless of repo visibility). To go live: set the repo variable
 # PUBLISH_PAGES=true and enable Pages (Settings → Pages → Source: GitHub
 # Actions). Until then this workflow costs no Actions minutes.
 name: pages

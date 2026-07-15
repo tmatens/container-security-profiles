@@ -21,3 +21,8 @@ jobs:
           python .contract/validate_profiles.py --catalog-dir catalog \
             --schema .contract/profile.schema.json --repo-root . > out.log 2>&1 && rc=0 || rc=$?
           cat out.log; exit $rc
+      - name: site generator builds (smoke — publishing is gated, see pages.yml)
+        run: |
+          pip install -r requirements-site.txt
+          python scripts/build_site.py --out /tmp/_site > site.log 2>&1 && rc=0 || rc=$?
+          cat site.log; exit $rc

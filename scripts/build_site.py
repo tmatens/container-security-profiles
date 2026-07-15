@@ -11,6 +11,7 @@ Usage: python scripts/build_site.py [--out _site]
 
 import argparse
 import html
+import json
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -201,6 +202,29 @@ def status_badge(status):
     return f'<span class="badge {cls}">{esc(status)}</span>'
 
 
+def freshness_badge(rel, freshness):
+    """Pin-freshness badge for a profile, from check_staleness.py --json output.
+
+    Reflects whether the profile's pinned digest still matches the tag's current
+    published digest as of the recorded check — NOT whether a newer version tag
+    exists (that is Renovate's concern). Returns '' when no freshness data is
+    available (e.g. a local build without --freshness), so it degrades cleanly.
+    """
+    entry = (freshness.get("profiles") or {}).get(rel)
+    if not entry:
+        return ""
+    checked = esc((freshness.get("checked_at") or "")[:10])
+    status = entry.get("status")
+    if status == "fresh":
+        return (f'<span class="badge ok" title="Pinned digest still matches the tag&#39;s '
+                f'current published digest (checked {checked}).">pin current</span>')
+    if status == "stale":
+        return (f'<span class="badge warn" title="Upstream republished this tag since '
+                f'derivation (checked {checked}); re-derivation pending.">pin stale</span>')
+    reason = esc(entry.get("reason", "freshness not checked"))
+    return f'<span class="badge dim" title="{reason}">pin unchecked</span>'
+
+
 def render_drop_test(drop_test):
     checks = (drop_test or {}).get("checks") or []
     if not checks:
@@ -278,16 +302,18 @@ def render_run_config(rc):
             + kv_table(pairs))
 
 
-def render_profile_page(profile, generated, commit):
+def render_profile_page(profile, generated, commit, freshness):
     data = profile["data"]
     rel = profile["rel"]
     depth = len(rel.parts)  # parts incl. filename; page lives under profiles/<rel>.html
     root = "../" * depth
     image = data["image"]
     tags = (data.get("applies_to") or {}).get("tags") or []
+    fresh = freshness_badge(rel.as_posix(), freshness)
     body = [f'<div class="crumb"><a href="{root}index.html">catalog</a> / {esc(rel.with_suffix(""))}</div>']
     body.append(f"<h1><code>{esc(image)}</code></h1>")
     body.append('<p class="lead">' + status_badge(data.get("status", ""))
+                + (" &nbsp;" + fresh if fresh else "")
                 + " &nbsp;tags: " + ", ".join(f"<code>{esc(t)}</code>" for t in tags) + "</p>")
 
     if profile["notes"]:
@@ -348,8 +374,20 @@ def render_criteria_page(profile, generated, commit):
                 generated, commit)
 
 
-def render_index(profiles, generated, commit):
+def render_index(profiles, generated, commit, freshness):
     n_validated = sum(1 for p in profiles if p["data"].get("status") == "validated")
+    checked = (freshness.get("checked_at") or "")[:10]
+    fresh_legend = (
+        '<p class="muted"><strong>Pin</strong> column — '
+        '<span class="badge ok">pin current</span> the pinned digest still matches the '
+        "tag&#39;s latest published digest; "
+        '<span class="badge warn">pin stale</span> upstream republished the tag, re-derivation '
+        "pending; "
+        '<span class="badge dim">pin unchecked</span> registry not queried. Tracks '
+        "<em>digest drift on the pinned tag</em>, not whether a newer version tag exists."
+        + (f" Checked {esc(checked)}." if checked else "")
+        + "</p>"
+    ) if freshness.get("profiles") else ""
     rows = []
     for p in profiles:
         data = p["data"]
@@ -358,6 +396,7 @@ def render_index(profiles, generated, commit):
         tags = ", ".join((data.get("applies_to") or {}).get("tags") or [])
         # One row per image; each dimension is a line in the minimum cell (a
         # profile's dimensions are one artifact, applied as a unit).
+        fresh = freshness_badge(rel.as_posix(), freshness)
         dim_lines = []
         dates = []
         for name, dim in (data.get("dimensions") or {}).items():
@@ -374,6 +413,7 @@ def render_index(profiles, generated, commit):
             f"<td>{''.join(dim_lines)}</td>"
             f"<td>{'<span class=\"badge ok\">app-tier</span>' if data.get('app_tier_verified') else ''}</td>"
             f"<td>{esc(max(dates) if dates else '')}</td>"
+            f"<td>{fresh}</td>"
             "</tr>")
     body = f"""
 <h1>Container security profiles</h1>
@@ -388,11 +428,12 @@ drop-test table, recorded invocation, and validation criteria. Confidence:
 surface; <span class="badge warn">moderate</span> = the image's feature surface is larger
 than any workload can bound — read the criteria for what's covered.
 Missing an image? <a href="{REPO_URL}/issues/new?template=profile-request.yml">Request a profile</a>.</p>
+{fresh_legend}
 <input id="filter" type="search" placeholder="Filter — image, capability, dimension…" aria-label="Filter profiles">
 <div class="tablewrap">
 <table class="catalog">
 <thead><tr><th>Image</th><th>Tags</th><th>Derived minimum (per dimension)</th>
-<th></th><th>Validated</th></tr></thead>
+<th></th><th>Validated</th><th>Pin</th></tr></thead>
 <tbody>{''.join(rows)}</tbody>
 </table>
 </div>
@@ -412,8 +453,18 @@ breaks your deployment, that's signal:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="_site")
+    parser.add_argument("--freshness", type=Path, default=None,
+                        help="optional freshness JSON from check_staleness.py --json")
     args = parser.parse_args()
     out = Path(args.out)
+
+    freshness = {}
+    if args.freshness and args.freshness.exists():
+        try:
+            freshness = json.loads(args.freshness.read_text())
+        except (ValueError, OSError) as exc:  # enrichment only — never fail the build
+            print(f"warning: ignoring unreadable freshness {args.freshness}: {exc}",
+                  file=sys.stderr)
 
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     try:
@@ -429,11 +480,11 @@ def main():
 
     (out).mkdir(parents=True, exist_ok=True)
     (out / ".nojekyll").write_text("")
-    (out / "index.html").write_text(render_index(profiles, generated, commit))
+    (out / "index.html").write_text(render_index(profiles, generated, commit, freshness))
     for p in profiles:
         dest = out / "profiles" / p["rel"].with_suffix(".html")
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(render_profile_page(p, generated, commit))
+        dest.write_text(render_profile_page(p, generated, commit, freshness))
         if p["criteria"]:
             cdest = out / "criteria" / p["rel"].with_suffix(".html")
             cdest.parent.mkdir(parents=True, exist_ok=True)

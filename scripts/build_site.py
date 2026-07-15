@@ -298,6 +298,14 @@ def render_profile_page(profile, generated, commit):
     body.append("<h2>Use it</h2>")
     body.append('<button class="copybtn" data-target="snippet">copy</button>')
     body.append(f'<pre><code id="snippet">{esc(snippet)}</code></pre>')
+    if len(data.get("dimensions") or {}) > 1:
+        body.append(
+            '<p class="muted">This profile has multiple dimensions and is applied '
+            "as a unit. Dimensions can interact — a capability can be required "
+            "only <em>because</em> of a sibling read-only/tmpfs recommendation — "
+            "so where they do, the minimum was derived under the sibling "
+            "dimension's context. See the criteria doc and each dimension's "
+            "recorded invocation below before applying them separately.</p>")
 
     for name, dim in (data.get("dimensions") or {}).items():
         deriv = dim.get("derivation") or {}
@@ -348,18 +356,25 @@ def render_index(profiles, generated, commit):
         rel = p["rel"]
         href = f"profiles/{rel.with_suffix('.html')}"
         tags = ", ".join((data.get("applies_to") or {}).get("tags") or [])
+        # One row per image; each dimension is a line in the minimum cell (a
+        # profile's dimensions are one artifact, applied as a unit).
+        dim_lines = []
+        dates = []
         for name, dim in (data.get("dimensions") or {}).items():
             deriv = dim.get("derivation") or {}
-            rows.append(
-                "<tr>"
-                f'<td><a href="{esc(href)}"><code>{esc(data["image"])}</code></a></td>'
-                f"<td><code>{esc(tags)}</code></td>"
-                f"<td>{esc(name)}</td>"
-                f"<td>{esc(dim_summary(name, dim))}</td>"
-                f"<td>{confidence_badge(deriv.get('confidence'))}</td>"
-                f"<td>{'<span class=\"badge ok\">app-tier</span>' if data.get('app_tier_verified') else ''}</td>"
-                f"<td>{esc(deriv.get('validated_date', ''))}</td>"
-                "</tr>")
+            dim_lines.append(
+                f"<div>{esc(name)} — <code>{esc(dim_summary(name, dim))}</code> "
+                f"{confidence_badge(deriv.get('confidence'))}</div>")
+            if deriv.get("validated_date"):
+                dates.append(str(deriv["validated_date"]))
+        rows.append(
+            "<tr>"
+            f'<td><a href="{esc(href)}"><code>{esc(data["image"])}</code></a></td>'
+            f"<td><code>{esc(tags)}</code></td>"
+            f"<td>{''.join(dim_lines)}</td>"
+            f"<td>{'<span class=\"badge ok\">app-tier</span>' if data.get('app_tier_verified') else ''}</td>"
+            f"<td>{esc(max(dates) if dates else '')}</td>"
+            "</tr>")
     body = f"""
 <h1>Container security profiles</h1>
 <p class="lead">Evidence-backed <strong>minimum-security profiles for container images</strong> —
@@ -376,8 +391,8 @@ Missing an image? <a href="{REPO_URL}/issues/new?template=profile-request.yml">R
 <input id="filter" type="search" placeholder="Filter — image, capability, dimension…" aria-label="Filter profiles">
 <div class="tablewrap">
 <table class="catalog">
-<thead><tr><th>Image</th><th>Tags</th><th>Dimension</th><th>Minimum</th>
-<th>Confidence</th><th></th><th>Validated</th></tr></thead>
+<thead><tr><th>Image</th><th>Tags</th><th>Derived minimum (per dimension)</th>
+<th></th><th>Validated</th></tr></thead>
 <tbody>{''.join(rows)}</tbody>
 </table>
 </div>

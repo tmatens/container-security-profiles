@@ -1,0 +1,49 @@
+# Build + deploy the catalog-browsing site to GitHub Pages.
+#
+# GATED: both jobs are skipped unless the repository variable PUBLISH_PAGES is
+# "true". A Pages site is PUBLICLY reachable even from a private repository, so
+# publishing is the same public-exposure act as flipping the repo public and is
+# held behind the same decision. To go live: set the repo variable
+# PUBLISH_PAGES=true and enable Pages (Settings → Pages → Source: GitHub
+# Actions). Until then this workflow costs no Actions minutes.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    if: ${{ vars.PUBLISH_PAGES == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.14'
+      - run: pip install -r requirements-site.txt
+      - name: build site
+        run: |
+          python scripts/build_site.py --out _site > out.log 2>&1 && rc=0 || rc=$?
+          cat out.log; exit $rc
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: _site
+  deploy:
+    if: ${{ vars.PUBLISH_PAGES == 'true' }}
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5

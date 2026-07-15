@@ -1,0 +1,4 @@
+# Deps for scripts/build_site.py (the GitHub Pages site) only — kept separate
+# from requirements.txt so the validate job doesn't install site tooling.
+PyYAML>=6
+Markdown>=3

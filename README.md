@@ -57,6 +57,27 @@ Catalog and criteria paths are **registry-namespaced**
 - `scripts/check_staleness.py` — the registry-only digest-drift check that backs
   the `staleness` workflow (see Freshness below).
 
+## Browsing the catalog (GitHub Pages)
+
+`scripts/build_site.py` renders the catalog as a static site — an index of every
+profile (image, dimension, minimum, confidence, app-tier badge) with per-profile
+evidence pages (compose-ready snippet, drop-test table, recorded `run_config`,
+embedded workload script) and the rendered criteria docs.
+
+```sh
+pip install -r requirements-site.txt
+make site            # builds into _site/
+python -m http.server -d _site   # local preview
+```
+
+Deployment (`.github/workflows/pages.yml`) is **gated off by default**: a Pages
+site is publicly reachable even from a private repository, so publishing is the
+same public-exposure decision as making the repo public. To go live, set the
+repository variable `PUBLISH_PAGES=true` and enable Pages (Settings → Pages →
+Source: **GitHub Actions**). Until then the workflow is skipped and costs no
+Actions minutes; the `validate` workflow still smoke-builds the generator on
+every PR so it can't rot.
+
 ## Validation
 
 ```sh

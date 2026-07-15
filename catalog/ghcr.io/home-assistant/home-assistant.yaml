@@ -31,8 +31,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: ghcr.io/home-assistant/home-assistant@sha256:f73512ba4fe06bb4d57636fe3578d0820cdec46f81e8f837ab59e451662ff3cb
-      validated_date: "2026-07-04"
+      validated_image: ghcr.io/home-assistant/home-assistant@sha256:1476924357b46e80735c13e94232ba5c853cac052e9df4bb28d50fa56348097b
+      validated_date: "2026-07-15"
       duration_seconds: 101
       confidence: high
       workload: profiles/workloads/home-assistant.sh

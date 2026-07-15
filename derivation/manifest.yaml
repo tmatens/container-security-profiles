@@ -186,3 +186,16 @@ images:
       writable stand-in is mounted at the PARENT /var/lib/alloy (alloy creates the
       data subdir itself) with mode=1777 (alloy runs as non-root uid 473).
 
+  - profile: catalog/docker.io/library/redis.yaml
+    image: docker.io/library/redis
+    tag: "8.2.7"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/redis.sh
+    note: >-
+      cap_add:[SETGID, SETUID] — startup caps (root->redis re-exec). SHARP EDGE:
+      with either dropped, redis keeps serving correctly AS ROOT — only the
+      correctness check's non-root uid assertion catches it, so any re-derivation
+      MUST keep the uid assert (a workload-only check falsely derives both as
+      removable). Default invocation: no user:, no binds (image anonymous /data,
+      pre-owned, so no CHOWN); a foreign-owned data bind re-introduces CHOWN.

@@ -35,6 +35,7 @@ services:
 | `docker.io/library/caddy` | `2` | filesystem | `read_only: true` | high |
 | `docker.io/library/mariadb` | `11.4` | capabilities | `cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/postgres` | `16` | capabilities | `cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` | high |
+| `docker.io/library/redis` | `8.2.7` | capabilities | `cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/postgres` | `16` | filesystem | `read_only: true, tmpfs: [/run/postgresql]` | high |
 | `docker.io/netdata/netdata` | `v2.10.3` | capabilities | `cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | high |
 | `docker.io/valkey/valkey` | `9` | capabilities | `cap_add: [SETGID, SETUID]` | high · app-tier ✓ |

@@ -12,9 +12,12 @@
 # redis:8.2.7 broker). A plain-text probe document skips OCR, so trials cover
 # the full web -> redis -> celery -> media pipeline without the slow OCR path.
 # See criteria/ghcr.io/paperless-ngx/paperless-ngx.md.
+# filesystem: read_only:true, tmpfs:[/run:exec, /tmp]. paperless stores its
+# data/media/consume/export under declared VOLUMEs (persistent). Under a
+# read-only rootfs its s6-overlay supervisor needs /run writable AND EXECUTABLE
+# (writes then execs /run/s6/.../init; a default noexec tmpfs fails), plus /tmp
+# scratch. Derived by drop-test (in-stack redis broker dep).
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: ghcr.io/paperless-ngx/paperless-ngx
 applies_to:
@@ -65,3 +68,35 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/run:exec, /tmp]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: ghcr.io/paperless-ngx/paperless-ngx@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
+      validated_date: "2026-07-16"
+      duration_seconds: 36
+      confidence: high
+      workload: profiles/workloads/paperless-ngx.sh
+      workload_sha256: "ef91d6e1463933ae84bec0dd72136a63046c78d4b185014c412f7479350abd3e"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [PAPERLESS_REDIS, PAPERLESS_SECRET_KEY, PAPERLESS_ADMIN_USER, PAPERLESS_ADMIN_PASSWORD]
+      drop_test:
+        checks:
+          - {removed: /run:exec, required: true, observed: "container failed to start: s6-overlay-suexec: fatal: child failed with exit code 111"}
+          - {removed: /tmp, required: true, observed: "container exited: /run/s6/basedir/scripts/rc.init: fatal: stopping the container."}

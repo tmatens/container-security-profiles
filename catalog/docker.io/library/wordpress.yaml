@@ -24,9 +24,12 @@
 #
 # First public-catalog profile derived with the in-stack dependent-tier model
 # (deps: mysql). See criteria/docker.io/library/wordpress.md.
+# filesystem: read_only:true, tmpfs:[/var/run/apache2]. wordpress (Apache+PHP)
+# copies WP core + stores uploads/config in /var/www/html, a declared VOLUME
+# (persistent, never tmpfs). Under a read-only rootfs the only rootfs write is
+# Apache's pid/lock dir /var/run/apache2; /var/log/apache2 and /tmp were
+# drop-tested and are NOT required. Derived by drop-test (in-stack mysql dep).
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.4"
 image: docker.io/library/wordpress
 applies_to:
@@ -78,3 +81,36 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: titled homepage served from DB, worker uid=33 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: titled homepage served from DB, worker uid=33 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: titled homepage served from DB, worker uid=33 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/var/run/apache2]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/wordpress@sha256:5d2c212561c4b5442ebc4d98933a9cbadcf3dee8888ed3fd9ed44667c27cc905
+      validated_date: "2026-07-16"
+      duration_seconds: 14
+      confidence: high
+      workload: profiles/workloads/wordpress.sh
+      workload_sha256: "283f1126ba4c268f47e307c261673429e388226570d62d202b58fd562477dc75"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [WORDPRESS_DB_HOST, WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD, WORDPRESS_DB_NAME]
+      drop_test:
+        checks:
+          - {removed: /var/run/apache2, required: true, observed: "container exited: AH00558: apache2: Could not reliably determine the server's fully qualified domain name, usi"}
+          - {removed: /var/log/apache2, required: false, observed: "correct: titled homepage served from DB, worker uid=33 (non-root)"}
+          - {removed: /tmp, required: false, observed: "correct: titled homepage served from DB, worker uid=33 (non-root)"}

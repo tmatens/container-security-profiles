@@ -1,10 +1,13 @@
 # jellyfin — validation criteria
 
 Per-image acceptance criteria for the `docker.io/jellyfin/jellyfin` profile.
-Validated against `…@sha256:aefb67e6…` (tag `10.11`), derived by drop-test
-against the **default invocation**. Capabilities trim **14 → 0** and the
-filesystem locks **read-only with no tmpfs at all** — the strongest lockdown
-in the catalog. Both dimensions apply as a unit.
+Validated against `…@sha256:aefb67e6…` (tag `10.11`). Capabilities and
+filesystem derived by drop-test against the **default invocation**:
+capabilities trim **14 → 0** and the filesystem locks **read-only with no
+tmpfs at all** — the strongest lockdown in the catalog; both apply as a
+unit. The devices dimension (below) is derived by **bpf-observation**
+against the same digest and answers the conditional question — what a
+hardware-transcode deployment must add.
 
 ## Representative workload / correctness check
 `profiles/workloads/jellyfin.sh` — the real first-run flow end-to-end:
@@ -36,13 +39,39 @@ capture-then-match responses.
   writable under `--read-only`. `/tmp` derived **not required** on the
   wizard/auth/serve path — no tmpfs needed at all.
 
-## Scope — GPU/transcoding is OUT
-Hardware transcoding (`/dev/dri`, VAAPI/QSV) is the **devices dimension**
-and is explicitly out of scope — the same deferral as immich's GPU (tracked
-upstream as csd#266). A transcode-enabled deployment adds `devices:` grants
-and likely `render` group membership; nothing in this profile speaks to
-that. Software playback of already-compatible media goes through the serve
-path this profile covers.
+## devices — derived by bpf-observation (the transcode grant)
+- **devices: [/dev/dri, /dev/dri/renderD128], derived_caps: [].** Derived
+  with csd's `devices` observer (trace_open on `/dev`) against a
+  `--device /dev/dri` run, driving jellyfin's **own bundled ffmpeg**
+  (`/usr/lib/jellyfin-ffmpeg/ffmpeg`) through full VAAPI h264 hardware
+  encodes for the whole 310s window
+  (`profiles/workloads/jellyfin-transcode.sh`) — the same binary and device
+  nodes a library-triggered playback transcode uses. `/dev/dri` (the
+  directory) is opened for node enumeration, `renderD128` for the encode
+  session; **no capability rides along** — the zero-cap story above holds
+  even when transcoding.
+- **What this means:** a transcode-enabled deployment needs exactly
+  `devices: [/dev/dri]` on top of this profile — not `privileged: true`,
+  not extra caps. The container runs as root, so `render` group membership
+  is not needed; under the `user:` hardening add the render GID
+  (`group_add`). Software-only deployments should grant no devices.
+- **Portability:** derived on an amdgpu (Mesa/RADV) host; the device-access
+  surface is driver-agnostic (`renderD128` is the first render node on
+  Intel i915 and amdgpu alike). Multi-GPU hosts may expose the target GPU
+  as `renderD129+` — grant the whole `/dev/dri` directory as derived and
+  the right node is available either way.
+- **Revalidation:** this dimension is **not in `derivation/manifest.yaml`**
+  — the csd-derive runner VM has no GPU, so the weekly loop cannot
+  re-derive it (grafting a GPU into the VM was judged not worth it,
+  homelab decision 2026-07-16). On a digest bump, re-run the derivation
+  manually on a GPU host:
+  `sudo csd --observe devices --container <jf> --duration 310s
+  --workload profiles/workloads/jellyfin-transcode.sh
+  --format compose-lint-profile` with the container started as
+  `docker run -d --device /dev/dri jellyfin/jellyfin:<tag>`.
+  Requires csd ≥ the build with in-gadget container filtering + digest
+  normalization (csd#407); before that, busy-host trace_open noise blows
+  the drop-rate gate and registry-qualified names derive un-pinned.
 
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the image default — root, no
@@ -52,6 +81,8 @@ path this profile covers.
   readable by the serving uid; a library scan of unreadable mounts fails
   regardless of caps.
 - **Out of band** (not schema fields): Docker's default seccomp baseline;
-  amd64. The minimum is only valid for what the workload exercises — wizard,
-  auth, authorized API; library scans over real media, playback/streaming,
-  and hardware transcode are out of scope.
+  amd64. The caps/fs minimum is only valid for what its workload exercises —
+  wizard, auth, authorized API; library scans over real media and
+  playback/streaming remain unexercised. Hardware transcode is covered by
+  the devices dimension's own workload (real VAAPI encodes), not by the
+  wizard flow.

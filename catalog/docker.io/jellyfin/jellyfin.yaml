@@ -11,9 +11,15 @@
 # image, and the residual risk is the root uid itself — the stronger
 # hardening is `user:`, which this profile composes with cleanly.
 #
-# GPU/VAAPI transcoding (the /dev/dri devices dimension) is OUT of scope —
-# the same deferral as immich GPU (csd#266). See
-# criteria/docker.io/jellyfin/jellyfin.md.
+# devices: the /dev/dri grant a hardware-transcode deployment needs, derived
+# by bpf-observation (trace_open) against `--device /dev/dri` with a real
+# VAAPI h264 encode via jellyfin's own bundled ffmpeg — the first
+# observation-derived (non-drop-test) validated dimension in the catalog.
+# derived_caps is empty: VAAPI needs the device nodes, no extra capability.
+# Software-only deployments should grant nothing — the caps/fs dimensions
+# above are already derived without any device. NOT in the re-derivation
+# manifest: the csd-derive runner VM has no GPU, so this dimension is
+# revalidated manually on digest bumps (criteria file has the procedure).
 schema_version: "1.3"
 image: docker.io/jellyfin/jellyfin
 applies_to:
@@ -95,3 +101,31 @@ dimensions:
       drop_test:
         checks:
           - {removed: /tmp, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+  devices:
+    devices: [/dev/dri, /dev/dri/renderD128]
+    derived_caps: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.6"
+      observer: devices
+      validated_image: docker.io/jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+      validated_date: "2026-07-16"
+      duration_seconds: 310
+      confidence: moderate
+      workload: profiles/workloads/jellyfin-transcode.sh
+      workload_sha256: "b19af9a9ffae18cf67453c16db82366d5574def6fd19a36e89af3f01fb28dd6e"
+      validated_via: [bpf-observation, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: ["/dev/dri"]
+        security_opt: []
+        mounts: []
+        env: []

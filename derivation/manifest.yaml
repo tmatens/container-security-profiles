@@ -351,3 +351,21 @@ images:
       read_only:true, tmpfs:[] — data/log are declared VOLUMEs (persistent,
       never tmpfs); /tmp not required. Spec: csd
       testdata/drop-test/mosquitto-fs.yaml.
+
+  - profile: catalog/docker.io/library/wordpress.yaml
+    image: docker.io/library/wordpress
+    tag: "6.9"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/wordpress.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID]
+      — richest evidence set in the catalog: tar --owner source-copy
+      (CHOWN+FOWNER), root-phase wp-config write (DAC_OVERRIDE), apache
+      master/worker drop (SETUID hard-fails; SETGID = SILENT ROOT WORKERS,
+      only the uid assert catches — httpd edge reproduced), :80 under the
+      pinned ip_unprivileged_port_start=1024 posture. In-stack: deps mysql
+      (the cataloged 8.4). HARNESS RULE from this derivation: capture-then-
+      match, never `curl | grep -q` under pipefail (SIGPIPE 141 = false
+      negative once the body outgrows the pipe buffer; burned three runs).
+      Spec: csd testdata/drop-test/wordpress-caps.yaml.

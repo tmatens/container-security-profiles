@@ -18,9 +18,11 @@
 # deployment choice, so NET_RAW is NOT in this base minimum (it would
 # over-grant the common HTTP/TCP/keyword case); a ping deployment adds it.
 # See criteria/docker.io/louislam/uptime-kuma.md.
+# filesystem: read_only:true, tmpfs:[/tmp]. uptime-kuma stores its SQLite DB +
+# config in /app/data (a persistent volume, never tmpfs) AND its Node.js runtime
+# REQUIRES /tmp writable for temp files — the server does not come up after DB
+# setup without it (drop-tested required). Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: docker.io/louislam/uptime-kuma
 applies_to:
@@ -71,3 +73,34 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: sqlite setup + http monitor running (UP heartbeat)"}
           - {removed: KILL, required: false, observed: "correct: sqlite setup + http monitor running (UP heartbeat)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: sqlite setup + http monitor running (UP heartbeat)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/tmp]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/louislam/uptime-kuma@sha256:91e963bfda569ba115206e843febb446f473ab525add4e08b2b9e3beffa16985
+      validated_date: "2026-07-16"
+      duration_seconds: 109
+      confidence: high
+      workload: profiles/workloads/uptime-kuma.sh
+      workload_sha256: "15c39a88737f5e4821de747d552a7d1d35bcde43fa3972d96833a940d8e5981b"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: true, observed: "server did not serve after DB setup"}

@@ -30,6 +30,16 @@ file-capability + user drop. Consequences vs pihole's 6-cap profile:
   file-cap acquisition needs it; AdGuard has no such step, so this profile
   keeps nnp. Two DNS servers, two low-port strategies, side by side.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** AdGuard writes its config to
+  `/opt/adguardhome/conf` and its data (query log, statistics, downloaded filter
+  lists) to `/opt/adguardhome/work` — neither is a declared VOLUME, so in
+  production both are persistent bind-mounts / named volumes (never tmpfs). Under
+  a read-only rootfs with those two writable it serves DNS with no additional
+  tmpfs; `/tmp` was drop-tested and comes out **not required**.
+- **Pass criteria:** the REST install + a local DNS rewrite + nslookup pass under
+  `read_only:true` (with `conf` and `work` writable) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **DNS-only.** DHCP mode requires NET_ADMIN + raw sockets — out of scope
   (the pihole boundary).

@@ -22,6 +22,15 @@ curl; probes exec as `--user 1000`; capture-then-match.
 - **Pass criteria:** REST status + folder add/readback **and** syncthing at
   uid 1000; each granted cap's drop fails as above.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** syncthing's config, device keys, and index DB
+  live in `/var/syncthing`, a declared VOLUME (auto-mounted writable; a named
+  volume in production — state must survive restarts, never tmpfs). Under a
+  read-only rootfs it starts and serves its API with no tmpfs; `/tmp` was
+  drop-tested and comes out **not required**.
+- **Pass criteria:** the API responds under `read_only:true` (with `/var/syncthing`
+  a writable volume) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation:** image default (root start, PUID/PGID 1000 via su-exec, a
   `/var/syncthing` VOLUME, `no-new-privileges`).

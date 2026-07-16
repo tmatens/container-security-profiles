@@ -38,6 +38,7 @@ services:
 | `docker.io/library/memcached` | `1.6` | `capabilities: cap_drop: [ALL] (zero-cap)` | high |
 | `docker.io/library/mongo` | `8.0` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/mysql` | `8.4` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID]` | high |
+| `docker.io/library/nextcloud` | `32` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/library/postgres` | `16` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run/postgresql]` | high |
 | `docker.io/library/traefik` | `v3.7` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/library/wordpress` | `6.9` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |

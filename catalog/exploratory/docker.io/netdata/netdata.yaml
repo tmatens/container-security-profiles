@@ -1,0 +1,48 @@
+# netdata cap_add_validation — EXPLORATORY (below the validated bar; see
+# acceptance_contract_violations). Validates netdata's officially-recommended
+# grant (cap_add: [SYS_PTRACE, SYS_ADMIN]) against observed cap_capable
+# syscalls, under the same representative run as the validated capabilities
+# dimension (pid:host, host network, host /proc,/sys,docker.sock ro-mounts).
+#
+# Why exploratory, probably permanently: the target itself generates the
+# event flood. apps.plugin trips a SYS_PTRACE cap_capable check for every
+# /proc/<pid> read of every host process, every second (~44k held events per
+# 30s), so the perf-buffer drop rate stays >=1% on any host — measured 1.9%
+# over 310s on a 16-core desktop with in-gadget container filtering active,
+# ~4% on the quiet csd-derive VM. In-kernel filtering cannot help when every
+# dropped event is attributable to the target (csd#407 discussion).
+#
+# READ WITH the validated capabilities dimension in
+# catalog/docker.io/netdata/netdata.yaml, which is AUTHORITATIVE for the
+# minimum: its drop-test proves SYS_ADMIN is droppable (the image ships no
+# ebpf.plugin, so nothing gates on it) while SYS_PTRACE is required. This
+# observation adds the complementary fact: netdata EXERCISES SYS_ADMIN
+# opportunistically when granted (collectors probe SYS_ADMIN-gated
+# operations and degrade gracefully without) — "exercised" here does NOT
+# mean "required". The two observers answer different questions; where they
+# diverge, drop-test wins for the minimum.
+schema_version: "1.0"
+image: docker.io/netdata/netdata
+status: exploratory
+acceptance_contract_violations:
+  - confidence.level "low" below moderate (see confidence.factors)
+  - trace_health.drop_rate 1.8663 >= 0.01
+dimensions:
+  cap_add_validation:
+    recommended_cap_add: [SYS_ADMIN, SYS_PTRACE]
+    validated_caps: [SYS_ADMIN, SYS_PTRACE]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.6"
+      observer: capadd
+      validated_image: docker.io/netdata/netdata@sha256:bcc822ec685dd7ee488e9f99b957f479b66301be04f13f346df692ad7de94151
+      validated_date: "2026-07-16"
+      duration_seconds: 310
+      confidence: low
+      workload: profiles/workloads/netdata.sh
+      workload_sha256: "ba6ae07c95eed30155baff45933b0ba9c171694a294539b08119360fc31180f6"
+      validated_via: [bpf-observation]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []

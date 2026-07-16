@@ -230,3 +230,17 @@ images:
       mysql-owned 1777); a foreign-owned bind re-introduces it. Correctness MUST
       keep the non-root uid assert (redis/mariadb sharp edge). Spec: csd
       testdata/drop-test/mysql-caps.yaml.
+
+  - profile: catalog/docker.io/library/mongo.yaml
+    image: docker.io/library/mongo
+    tag: "8.0"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/mongo.sh
+    note: >-
+      cap_add:[SETGID, SETUID] — the gosu root->mongodb re-exec; either dropped
+      = container never starts. No CHOWN (data dirs ship mongodb-owned; foreign
+      bind re-introduces it); no SYS_NICE (official test grants it for NUMA,
+      but it is outside the default set and mongod warns instead of failing).
+      Correctness MUST keep the non-root uid assert. Spec: csd
+      testdata/drop-test/mongo-caps.yaml.

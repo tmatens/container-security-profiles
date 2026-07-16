@@ -30,8 +30,8 @@ dimensions:
       tool_version: "0.6.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/postgres@sha256:eb4759788a2182f08257135e61a34f2cfc3c2914079f3465d64ee62350f4d081
-      validated_date: "2026-07-15"
+      validated_image: docker.io/library/postgres@sha256:17e67d7b9890c99b055ba1e0d5c5be4ec27c9d3a72bda32db24a5e5d8a85af0c
+      validated_date: "2026-07-16"
       duration_seconds: 60
       confidence: high
       workload: profiles/workloads/postgres.sh
@@ -63,8 +63,8 @@ dimensions:
       tool_version: "0.6.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/postgres@sha256:eb4759788a2182f08257135e61a34f2cfc3c2914079f3465d64ee62350f4d081
-      validated_date: "2026-07-15"
+      validated_image: docker.io/library/postgres@sha256:17e67d7b9890c99b055ba1e0d5c5be4ec27c9d3a72bda32db24a5e5d8a85af0c
+      validated_date: "2026-07-16"
       duration_seconds: 60
       confidence: high
       workload: profiles/workloads/postgres.sh

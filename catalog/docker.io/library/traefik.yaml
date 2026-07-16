@@ -1,0 +1,70 @@
+# traefik — minimum Linux capabilities, derived by drop-test against the
+# file-provider reverse-proxy invocation (static config via flags, one routed
+# upstream). This profile trims the full Docker default cap set 14 -> 1.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[NET_BIND_SERVICE]. traefik runs as
+# root with NO privilege drop; the one load-bearing capability is binding
+# entrypoint :80 — dropping it exits at startup ("listen tcp :80: bind:
+# permission denied"). IMPORTANT SCOPE: that requirement exists only under the
+# hardened kernel posture net.ipv4.ip_unprivileged_port_start=1024, which the
+# derivation PINS via sysctl (docker's default is 0 = all ports unprivileged,
+# where the cap would read falsely-removable). Deployments keeping docker's
+# default sysctl can drop even this cap; deployments with high-port
+# entrypoints (:8080) need no cap either.
+#
+# THE DOCKER-PROVIDER VARIANT IS OUT OF SCOPE: mounting /var/run/docker.sock
+# makes the socket itself the dominant risk (root-equivalent host control) —
+# a capability minimum CANNOT address it and must not be read as making that
+# deployment safe. This profile covers the file-provider shape only. See
+# criteria/docker.io/library/traefik.md.
+schema_version: "1.3"
+image: docker.io/library/traefik
+applies_to:
+  tags: ["v3.7"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/traefik@sha256:0bd09a37d61ac1c9decaaa762dffd7b768de3ca62946861348f1eff7bb7b93aa
+      validated_date: "2026-07-16"
+      duration_seconds: 300
+      confidence: high
+      workload: profiles/workloads/traefik.sh
+      workload_sha256: "3e5d93cd16b4a4e8f8fd731396b495fdc6d3e6603fbd30fb7945a699f58fb6f1"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: ["--entrypoints.web.address=:80", "--providers.file.directory=/tmp",
+                  "--providers.file.watch=true", "--api=false", "--log.level=INFO"]
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: FSETID, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: FOWNER, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: MKNOD, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: NET_RAW, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: SETGID, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: SETUID, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: SETFCAP, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: SETPCAP, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: NET_BIND_SERVICE, required: true, observed: "container exited: ERR Command error: error while building entryPoint web: building listener: error opening listener: listen tcp :80: bind: permission denied"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: KILL, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}

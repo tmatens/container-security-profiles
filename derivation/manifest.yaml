@@ -260,3 +260,43 @@ images:
       as --user rabbitmq never root (root probe needs DAC_OVERRIDE/FOWNER ->
       pollutes the minimum). Declares must be durable on 4.x. Spec: csd
       testdata/drop-test/rabbitmq-caps.yaml.
+
+  - profile: catalog/docker.io/prom/prometheus.yaml
+    image: docker.io/prom/prometheus
+    tag: "v3.13.1"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/prometheus.sh
+    note: >-
+      ZERO-CAP: cap_drop:[ALL], no cap_add — image runs as USER nobody from the
+      first instruction, no root phase at all. Workload must assert the TSDB
+      write path (self-scrape up==1 + samples appended, both polled — first
+      scrape ~15s, appended counter reads 0 on its first report). Probes exec
+      as nobody by construction. Spec: csd testdata/drop-test/prometheus-caps.yaml.
+
+  - profile: catalog/docker.io/prom/prometheus.yaml
+    image: docker.io/prom/prometheus
+    tag: "v3.13.1"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/prometheus.sh
+    note: >-
+      read_only:true, tmpfs:[] — all writes go to the /prometheus VOLUME
+      (persistent in real deployments, never tmpfs; docker mounts it writable
+      under read_only). /tmp derived not required. Spec: csd
+      testdata/drop-test/prometheus-fs.yaml.
+
+  - profile: catalog/docker.io/library/traefik.yaml
+    image: docker.io/library/traefik
+    tag: "v3.7"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/traefik.sh
+    note: >-
+      cap_add:[NET_BIND_SERVICE] for the :80 entrypoint bind — ONLY under the
+      pinned sysctl net.ipv4.ip_unprivileged_port_start=1024 (docker defaults 0
+      = falsely-removable; the spec pins the hardened posture, csd#340 item 5).
+      File-provider invocation with an in-stack caddy dep; docker-socket
+      variant deliberately out of scope (the socket is the risk, csd#110).
+      Dynamic config docker-cp'd into /tmp + directory watch. Spec: csd
+      testdata/drop-test/traefik-caps.yaml.

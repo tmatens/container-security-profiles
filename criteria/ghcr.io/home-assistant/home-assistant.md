@@ -36,6 +36,18 @@ there is no non-root-uid assertion to make.
 - **Pass criteria:** the workload passes (onboarding API + owner user created);
   dropping DAC_OVERRIDE makes HA unable to write `/config` and the container exits.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/run:exec].** HA's config, SQLite DB, and `.storage`
+  live in `/config` (a persistent volume in production, never tmpfs). Under
+  `--read-only` its **s6-overlay** supervisor needs `/run` writable **and
+  executable** — it writes then `exec`s `/run/s6/.../init`, so a default (noexec)
+  `--tmpfs /run` fails `Permission denied`. The minimum is therefore the
+  exec-mounted tmpfs `/run:exec` (valid docker/compose short syntax). `/tmp` was
+  drop-tested and comes out **not required**.
+- **Pass criteria:** the onboarding API becomes ready and owner-create succeeds
+  (the real `/config` write path) under `read_only:true` with `tmpfs:[/run:exec]`
+  and `/config` a writable volume.
+
 ## Scope — this is HA *core*, integrations extend the minimum
 This is the sharp edge for Home Assistant: its capability needs are a function of the
 **enabled integrations**, and a base instance exercises none of them. Capabilities a

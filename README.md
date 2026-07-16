@@ -57,7 +57,7 @@ services:
 | `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | high |
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |
-| `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` | high |
+| `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` · `filesystem: read_only: true, tmpfs: [/run:exec]` | high |
 | `ghcr.io/paperless-ngx/paperless-ngx` | `2.18` | `capabilities: cap_add: [CHOWN, SETGID, SETUID]` | high |
 | `ghcr.io/immich-app/postgres` | `14-vectorchord…` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/etc/postgresql, /var/run/postgresql]` | high · app-tier ✓ |
 

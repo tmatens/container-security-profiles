@@ -49,8 +49,8 @@ profile trims it **14 → 5**.
   removable** in a posture-0 drop-test and is genuinely **required** under the
   hardened posture — the same posture `httpd`/`traefik`/`nextcloud`/`ntfy` pin. The
   profile therefore includes it and scopes it to
-  `net.ipv4.ip_unprivileged_port_start=1024` (schema 1.3 `run_config` has no sysctls
-  field, so the scope lives in the profile header + here). The web listener binds the
+  `net.ipv4.ip_unprivileged_port_start=1024`, recorded structurally in
+  `derivation.run_config.sysctls` (schema 1.4). The web listener binds the
   unprivileged `:3000` and needs no capability at any posture.
 - **Pass criteria:** the workload passes (web + git-over-HTTP + sshd-reaches-auth)
   **and** `gitea web` runs as uid 1000; dropping CHOWN, DAC_OVERRIDE, SETUID, SETGID,

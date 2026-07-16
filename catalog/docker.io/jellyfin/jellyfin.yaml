@@ -1,0 +1,97 @@
+# jellyfin — minimum capabilities AND read-only filesystem, derived by
+# drop-test against the default invocation. ZERO-cap AND fully read-only
+# (tmpfs:[] — not even /tmp): cap_drop:[ALL] with no cap_add.
+#
+# The most instructive zero-cap in the catalog: unlike prometheus/memcached
+# (non-root by construction), jellyfin RUNS AS ROOT with no privilege drop —
+# and still exercises no capability on the serve path: it binds only the
+# unprivileged :8096 and writes only to its /config and /cache VOLUMEs
+# (persistent in real deployments; docker mounts them writable under
+# read_only). So the full Docker default set is pure over-grant for this
+# image, and the residual risk is the root uid itself — the stronger
+# hardening is `user:`, which this profile composes with cleanly.
+#
+# GPU/VAAPI transcoding (the /dev/dri devices dimension) is OUT of scope —
+# the same deferral as immich GPU (csd#266). See
+# criteria/docker.io/jellyfin/jellyfin.md.
+schema_version: "1.3"
+image: docker.io/jellyfin/jellyfin
+applies_to:
+  tags: ["10.11"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+      validated_date: "2026-07-16"
+      duration_seconds: 600
+      confidence: high
+      workload: profiles/workloads/jellyfin.sh
+      workload_sha256: "2130b96089498bbec6ad44b6da76f67db487b6d23a65f2f9c7e1d2275de4533e"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: FSETID, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: FOWNER, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: MKNOD, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: NET_RAW, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: SETGID, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: SETUID, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: SETFCAP, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: SETPCAP, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: KILL, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+      validated_date: "2026-07-16"
+      duration_seconds: 120
+      confidence: high
+      workload: profiles/workloads/jellyfin.sh
+      workload_sha256: "2130b96089498bbec6ad44b6da76f67db487b6d23a65f2f9c7e1d2275de4533e"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: wizard + admin auth + authorized System/Info ok"}

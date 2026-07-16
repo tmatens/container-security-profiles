@@ -37,6 +37,7 @@ services:
 | `docker.io/library/eclipse-mosquitto` | `2.0` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/library/mariadb` | `11.4` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/memcached` | `1.6` | `capabilities: cap_drop: [ALL] (zero-cap)` | high |
+| `docker.io/minio/minio` | `RELEASE.2025-09-07…` | `capabilities: cap_drop: [ALL] (zero-cap)` | high |
 | `docker.io/library/mongo` | `8.0` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/mysql` | `8.4` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID]` | high |
 | `docker.io/library/nextcloud` | `32` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
@@ -46,6 +47,7 @@ services:
 | `docker.io/library/rabbitmq` | `4.3` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/library/redis` | `8.2.7` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/prom/prometheus` | `v3.13.1` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
+| `docker.io/pihole/pihole` | `2026.07.2` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETFCAP, SETGID, SETUID] (DNS-only; NO no-new-privileges — see criteria)` | high |
 | `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | high |
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |

@@ -244,3 +244,19 @@ images:
       but it is outside the default set and mongod warns instead of failing).
       Correctness MUST keep the non-root uid assert. Spec: csd
       testdata/drop-test/mongo-caps.yaml.
+
+  - profile: catalog/docker.io/library/rabbitmq.yaml
+    image: docker.io/library/rabbitmq
+    tag: "4.3"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/rabbitmq.sh
+    note: >-
+      cap_add:[SETGID, SETUID] — the gosu root->rabbitmq re-exec; either
+      dropped = container never starts. No CHOWN (data volume ships
+      rabbitmq-owned). TWO HARNESS SHARP EDGES (reproduced on 4.3): never exec
+      a rabbitmq CLI during boot (root Erlang client races .erlang.cookie ->
+      broker crash; gate on "Server startup complete" log line), and exec CLIs
+      as --user rabbitmq never root (root probe needs DAC_OVERRIDE/FOWNER ->
+      pollutes the minimum). Declares must be durable on 4.x. Spec: csd
+      testdata/drop-test/rabbitmq-caps.yaml.

@@ -199,3 +199,18 @@ images:
       MUST keep the uid assert (a workload-only check falsely derives both as
       removable). Default invocation: no user:, no binds (image anonymous /data,
       pre-owned, so no CHOWN); a foreign-owned data bind re-introduces CHOWN.
+
+  - profile: catalog/docker.io/valkey/valkey.yaml
+    image: docker.io/valkey/valkey
+    tag: "9"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/valkey.sh
+    note: >-
+      cap_add:[SETGID, SETUID] — startup caps (root->valkey setpriv drop; either
+      dropped = container exits at start). Same sharp edge as redis: the
+      correctness check MUST assert a non-root server uid. Profile scope is the
+      no-data-volume invocation (image's pre-owned /data, so no CHOWN — a
+      documented over-grant note in the profile); immich's tmpfs invocation
+      (CHOWN needed) is deploy-check's scope (csd deploy-check/manifest.yaml),
+      never this entry's. Spec: csd testdata/drop-test/valkey-caps.yaml.

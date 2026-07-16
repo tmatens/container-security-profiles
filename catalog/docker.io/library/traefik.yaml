@@ -17,9 +17,11 @@
 # a capability minimum CANNOT address it and must not be read as making that
 # deployment safe. This profile covers the file-provider shape only. See
 # criteria/docker.io/library/traefik.md.
+# filesystem: read_only:true, tmpfs:[]. traefik writes nothing to its rootfs
+# when proxying — it runs correctly under a read-only rootfs with no tmpfs. Its
+# dynamic routing config rides a READ-ONLY mount (the file provider reads it,
+# never writes); /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.4"
 image: docker.io/library/traefik
 applies_to:
@@ -34,7 +36,7 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/traefik@sha256:0bd09a37d61ac1c9decaaa762dffd7b768de3ca62946861348f1eff7bb7b93aa
+      validated_image: docker.io/library/traefik@sha256:4299bbed850421258fc5448c2e0e6ad350981d4d335a68de11b92448aedbefe5
       validated_date: "2026-07-16"
       duration_seconds: 300
       confidence: high
@@ -72,3 +74,34 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
           - {removed: KILL, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: :80 routed through traefik to the caddy backend"}
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/traefik@sha256:4299bbed850421258fc5448c2e0e6ad350981d4d335a68de11b92448aedbefe5
+      validated_date: "2026-07-16"
+      duration_seconds: 5
+      confidence: high
+      workload: profiles/workloads/traefik.sh
+      workload_sha256: "3e5d93cd16b4a4e8f8fd731396b495fdc6d3e6603fbd30fb7945a699f58fb6f1"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: [--entrypoints.web.address=:80, --providers.file.directory=/etc/traefik/dynamic, --providers.file.watch=false, --api=false, --log.level=INFO]
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: :80 routed through traefik to the caddy backend (read-only rootfs)"}

@@ -34,7 +34,7 @@ services:
 | `docker.io/jellyfin/jellyfin` | `10.11` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/binwiederhier/ntfy` | `v2.14.0` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | high |
 | `docker.io/library/caddy` | `2` | `capabilities: cap_add: [NET_BIND_SERVICE]` · `filesystem: read_only: true` | high |
-| `docker.io/library/haproxy` | `3.2` | `capabilities: cap_drop: [ALL] (zero-cap, non-root)` | high |
+| `docker.io/library/haproxy` | `3.2` | `capabilities: cap_drop: [ALL] (zero-cap, non-root)` · `filesystem: read_only: true` | high |
 | `docker.io/library/httpd` | `2.4` | `capabilities: cap_add: [NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true, tmpfs: [/usr/local/apache2/logs]` | high |
 | `docker.io/library/eclipse-mosquitto` | `2.0` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/library/mariadb` | `11.4` | `capabilities: cap_add: [SETGID, SETUID]` | high |
@@ -47,7 +47,7 @@ services:
 | `docker.io/library/mysql` | `8.4` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID]` | high |
 | `docker.io/library/nextcloud` | `32` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/library/postgres` | `16` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run/postgresql]` | high |
-| `docker.io/library/traefik` | `v3.7` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` | high |
+| `docker.io/library/traefik` | `v3.7` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | high |
 | `docker.io/library/wordpress` | `6.9` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/library/rabbitmq` | `4.3` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/syncthing/syncthing` | `2.0` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true` | high |

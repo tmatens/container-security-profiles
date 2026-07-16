@@ -33,6 +33,16 @@ target's netns.
 - **Pass criteria:** the routed backend response on `:80`; dropping
   NET_BIND_SERVICE fails container start under the pinned sysctl.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** traefik writes nothing to its rootfs while
+  proxying — under `--read-only` it routes a request on `:80` through to the
+  in-stack caddy backend with no tmpfs. Its dynamic file-provider config is
+  supplied by a **read-only config mount** (traefik reads it, never writes), so
+  `/tmp` — which the capabilities derivation writes the config into — drop-tests
+  as **not required** here.
+- **Pass criteria:** the routed backend response succeeds under `read_only:true`
+  (config on a read-only mount) and no rootfs tmpfs.
+
 ## Scope — the docker-socket variant is deliberately OUT
 The popular alternative wiring — `--providers.docker` with
 `/var/run/docker.sock` mounted — is **not covered and cannot be**: the socket

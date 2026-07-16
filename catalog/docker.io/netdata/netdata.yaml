@@ -4,8 +4,13 @@
 # root->netdata privilege drop) that runtime observation records as "unused."
 # Dropping those leaves netdata healthy while silently running as root.
 #
-# SYS_ADMIN is the one over-grant: the image ships no ebpf.plugin, so ebpf=yes is
-# a no-op and it gates nothing. SYS_PTRACE is REQUIRED: apps.plugin runs real-uid
+# SYS_ADMIN is removable FOR THIS PROFILE'S SCOPE (host + per-process monitoring):
+# the image ships no ebpf.plugin, so ebpf=yes is a no-op and it gates nothing.
+# COVERAGE CAVEAT: SYS_ADMIN IS required for per-container network-interface
+# metrics (the cgroup-network helper enters each container's netns via setns,
+# which needs CAP_SYS_ADMIN) — a path this workload does not exercise. Add
+# SYS_ADMIN back if you rely on those. See the criteria doc's coverage caveat.
+# SYS_PTRACE is REQUIRED: apps.plugin runs real-uid
 # = the netdata user (setuid gives euid 0, not real uid 0), so it needs
 # CAP_SYS_PTRACE to read ANY process's /proc/<pid>/io|fd; without it it collects
 # every per-process metric as 0 (not null). The correctness check requires a

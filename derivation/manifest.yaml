@@ -529,3 +529,18 @@ images:
       under the pinned sysctl. Workload adds a LOCAL rewrite (csd.test ->
       127.0.0.1) so resolution has no upstream in the loop. Spec: csd
       testdata/drop-test/adguardhome-caps.yaml.
+
+  - profile: catalog/ghcr.io/paperless-ngx/paperless-ngx.yaml
+    image: ghcr.io/paperless-ngx/paperless-ngx
+    tag: "2.18"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/paperless-ngx.sh
+    note: >-
+      cap_add:[CHOWN, SETGID, SETUID] — s6 init chowns data/media/consume on
+      fresh volumes then drops workers to PUID 1000; any dropped fatals s6
+      rc.init. Leaner than wordpress/nextcloud: NO DAC_OVERRIDE (chown lands
+      ownership before writes) and NO FOWNER (no --owner source copy).
+      Unprivileged :8000. In-stack: deps redis (cataloged 8.2.7). Text-doc
+      probe skips OCR but covers web->redis->celery->media. Spec: csd
+      testdata/drop-test/paperless-ngx-caps.yaml.

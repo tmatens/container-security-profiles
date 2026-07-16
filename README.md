@@ -58,6 +58,7 @@ services:
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |
 | `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` | high |
+| `ghcr.io/paperless-ngx/paperless-ngx` | `2.18` | `capabilities: cap_add: [CHOWN, SETGID, SETUID]` | high |
 | `ghcr.io/immich-app/postgres` | `14-vectorchord…` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` | high · app-tier ✓ |
 
 All capability profiles are `cap_drop: [ALL]` plus the listed `cap_add`.

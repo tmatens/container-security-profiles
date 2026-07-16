@@ -1,0 +1,64 @@
+# paperless-ngx — minimum Linux capabilities, derived by drop-test against
+# the in-stack invocation (against a redis broker). Trims 14 -> 3:
+# cap_add:[CHOWN, SETGID, SETUID]. The s6-overlay init starts as root,
+# provisions/chowns the data + media + consume dirs on the fresh volumes
+# (CHOWN), and drops every worker — granian web, celery worker, celery beat —
+# to the default PUID 1000 (SETGID/SETUID); dropping any of the three fatals
+# the s6 rc.init. Notably NO DAC_OVERRIDE (the chown lands ownership before
+# the writes, so post-chown writes are as the owner) and the web tier is the
+# unprivileged :8000 (no NET_BIND_SERVICE).
+#
+# Derived with the in-stack dependent-tier model (deps: the cataloged
+# redis:8.2.7 broker). A plain-text probe document skips OCR, so trials cover
+# the full web -> redis -> celery -> media pipeline without the slow OCR path.
+# See criteria/ghcr.io/paperless-ngx/paperless-ngx.md.
+schema_version: "1.3"
+image: ghcr.io/paperless-ngx/paperless-ngx
+applies_to:
+  tags: ["2.18"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: ghcr.io/paperless-ngx/paperless-ngx@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
+      validated_date: "2026-07-16"
+      duration_seconds: 1200
+      confidence: high
+      workload: profiles/workloads/paperless-ngx.sh
+      workload_sha256: "ef91d6e1463933ae84bec0dd72136a63046c78d4b185014c412f7479350abd3e"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: [PAPERLESS_REDIS, PAPERLESS_SECRET_KEY, PAPERLESS_ADMIN_USER, PAPERLESS_ADMIN_PASSWORD]
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: true, observed: "container exited: /run/s6/basedir/scripts/rc.init: fatal: stopping the container."}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: FSETID, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: FOWNER, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: SETGID, required: true, observed: "container exited: /run/s6/basedir/scripts/rc.init: fatal: stopping the container."}
+          - {removed: SETUID, required: true, observed: "container exited: /run/s6/basedir/scripts/rc.init: fatal: stopping the container."}
+          - {removed: SETFCAP, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: document consumed via the full pipeline, worker uid=1000 (non-root)"}

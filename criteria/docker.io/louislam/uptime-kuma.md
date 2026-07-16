@@ -44,6 +44,17 @@ ping caveat is **measured evidence** rather than an unmeasured gap.
 - **Pass criteria:** sqlite setup + an HTTP monitor reporting UP, with every
   candidate dropped (base); the ping-spec run additionally requires NET_RAW.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/tmp].** uptime-kuma stores its SQLite DB + config
+  in `/app/data` — a persistent volume in production (never tmpfs) — AND its
+  Node.js runtime **requires `/tmp` writable** for temp files: the server does not
+  come up after DB setup without it (drop-tested **required**, and the correctness
+  check writes nothing into the container, so this is a genuine app write, not a
+  probe artifact).
+- **Pass criteria:** the socket.io-driven HTTP monitor round-trip passes under
+  `read_only:true` with `tmpfs:[/tmp]` (and `/app/data` a writable volume), and
+  dropping `/tmp` breaks server startup after DB setup.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation:** v2 default, embedded sqlite chosen at setup, fresh rootfs
   (no volume declared — data under `/app/data`), `no-new-privileges`.

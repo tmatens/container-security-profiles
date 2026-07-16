@@ -35,6 +35,15 @@ catalog:
   as uid 999; dropping SETGID or SETUID leaves the server running as root
   (fail by uid assertion).
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** redis's only writes are to its `/data` store, a
+  declared VOLUME that docker auto-mounts writable even under `--read-only` (a
+  named volume in production — RDB/AOF must survive restarts, never tmpfs). Under
+  a read-only rootfs it serves the SET/GET + a synchronous SAVE with no tmpfs;
+  `/tmp` was drop-tested and comes out **not required**.
+- **Pass criteria:** the SET/GET + SAVE round-trip and the non-root uid assert
+  pass under `read_only:true` (with `/data` a writable volume) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 
 - **Invocation**: image default — no `user:` override, no binds, no

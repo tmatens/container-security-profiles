@@ -1,7 +1,7 @@
 # caddy — validation criteria
 
 Per-image acceptance criteria for the `docker.io/library/caddy` profile
-(compose-lint#359). Validated against `caddy:2@sha256:af5fdcd7…`, the default
+(compose-lint#359). Validated against `caddy:2@sha256:58483504…`, the default
 file-server configuration.
 
 ## Representative workload / correctness check
@@ -15,11 +15,19 @@ correctness signal: caddy serves a `GET` on `:80`.
 - **cap_drop: [ALL], cap_add: [NET_BIND_SERVICE].** Baseline is `cap_drop:ALL` +
   the full Docker-default cap set; each default cap is dropped in turn and the
   file server re-verified.
-- Only **NET_BIND_SERVICE** is required — caddy binds the privileged port `:80`,
-  and without the cap it cannot listen (the container exits / the `GET` fails).
-  Every other default cap (CHOWN, DAC_OVERRIDE, FSETID, FOWNER, MKNOD, NET_RAW,
-  SETGID, SETUID, SETFCAP, SETPCAP, SYS_CHROOT, KILL, AUDIT_WRITE) is dropped
-  with the file server still serving.
+- Only **NET_BIND_SERVICE** is required, and the requirement is **exec-time and
+  posture-independent** — not a runtime bind of the privileged `:80`. The
+  `/usr/bin/caddy` binary carries the file capability `cap_net_bind_service=ep`
+  (`getcap` confirms it), so under `cap_drop:ALL` the bounding set no longer
+  contains NET_BIND_SERVICE and `execve` of the binary fails with `operation not
+  permitted` **before caddy ever listens**. Consequently, unlike `httpd`/`traefik`
+  — which bind `:80` at runtime as an already-running process and so derive
+  NET_BIND_SERVICE only under the hardened `net.ipv4.ip_unprivileged_port_start=1024`
+  posture — caddy needs **no sysctl posture pin**: the drop-test verdict is
+  `required: true` at Docker's default `ip_unprivileged_port_start=0` and at 1024
+  alike (both fail the same execve). Every other default cap (CHOWN, DAC_OVERRIDE,
+  FSETID, FOWNER, MKNOD, NET_RAW, SETGID, SETUID, SETFCAP, SETPCAP, SYS_CHROOT,
+  KILL, AUDIT_WRITE) is dropped with the file server still serving.
 - Matches the independently bisected ground truth in `container-sec-derive`
   (`testdata/caddy/ground_truth.json`).
 - **Pass criteria:** the file server serves under `cap_drop:ALL` +

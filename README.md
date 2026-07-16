@@ -27,7 +27,7 @@ services:
 
 | Image | Tags | Minimum (all dimensions apply as a unit) | Confidence |
 |---|---|---|---|
-| `codeberg.org/forgejo/forgejo` | `15` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT]` | high |
+| `codeberg.org/forgejo/forgejo` | `15` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETGID, SETUID, SYS_CHROOT] (NET_BIND_SERVICE under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/grafana/alloy` | `v1.16.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/grafana/grafana` | `13.0.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high (caps) · moderate (fs) |
 | `docker.io/grafana/loki` | `3.7.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |

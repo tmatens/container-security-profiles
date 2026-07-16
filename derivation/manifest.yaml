@@ -199,6 +199,8 @@ images:
       MUST keep the uid assert (a workload-only check falsely derives both as
       removable). Default invocation: no user:, no binds (image anonymous /data,
       pre-owned, so no CHOWN); a foreign-owned data bind re-introduces CHOWN.
+      Spec: csd testdata/drop-test/redis-caps.yaml (correctness/redis.sh —
+      SET/GET + SAVE + non-root uid assert; reproduced [SETGID, SETUID]).
 
   - profile: catalog/docker.io/valkey/valkey.yaml
     image: docker.io/valkey/valkey

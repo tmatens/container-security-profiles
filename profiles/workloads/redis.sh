@@ -14,8 +14,12 @@ set -euo pipefail
 
 : "${REDISCONTAINER:?REDISCONTAINER must be set}"
 
+# Probes run as the redis user (never root — a root probe's own needs would
+# pollute the derived minimum) and capture-then-match (never `producer | grep -q`
+# under pipefail: grep's early exit SIGPIPEs the producer and a matching
+# response reads as failure).
 deadline=$((SECONDS + 30))
-until docker exec "${REDISCONTAINER}" redis-cli ping 2>/dev/null | grep -qi PONG; do
+until grep -qi PONG <<<"$(docker exec --user redis "${REDISCONTAINER}" redis-cli ping 2>/dev/null)"; do
     if (( SECONDS >= deadline )); then
         echo "redis did not respond to PING in 30s" >&2
         exit 1
@@ -23,14 +27,14 @@ until docker exec "${REDISCONTAINER}" redis-cli ping 2>/dev/null | grep -qi PONG
     sleep 1
 done
 
-docker exec "${REDISCONTAINER}" redis-cli set csd:probe ok >/dev/null
-value="$(docker exec "${REDISCONTAINER}" redis-cli get csd:probe | tr -d '[:space:]')"
+docker exec --user redis "${REDISCONTAINER}" redis-cli set csd:probe ok >/dev/null
+value="$(docker exec --user redis "${REDISCONTAINER}" redis-cli get csd:probe | tr -d '[:space:]')"
 if [ "$value" != ok ]; then
     echo "GET returned '${value}' (expected 'ok')" >&2
     exit 1
 fi
 
-docker exec "${REDISCONTAINER}" redis-cli save | grep -q OK || {
+grep -q OK <<<"$(docker exec --user redis "${REDISCONTAINER}" redis-cli save)" || {
     echo "SAVE failed (cannot write the RDB to /data)" >&2
     exit 1
 }

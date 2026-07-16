@@ -17,20 +17,22 @@ set -euo pipefail
 : "${PROMETHEUSCONTAINER:?PROMETHEUSCONTAINER must be set}"
 C="${PROMETHEUSCONTAINER}"
 
+# All probes capture-then-match — never `producer | grep -q` under pipefail
+# (grep's early exit SIGPIPEs wget and a matching response reads as failure).
 deadline=$((SECONDS + 45))
-until docker exec "$C" wget -qO- http://localhost:9090/-/ready 2>/dev/null | grep -qi ready; do
+until grep -qi ready <<<"$(docker exec "$C" wget -qO- http://localhost:9090/-/ready 2>/dev/null)"; do
     (( SECONDS >= deadline )) && { echo "prometheus never ready" >&2; exit 1; }
     sleep 1
 done
 
 deadline=$((SECONDS + 45))
-until docker exec "$C" wget -qO- 'http://localhost:9090/api/v1/query?query=up' 2>/dev/null | grep -q '"value":\[[0-9.]*,"1"\]'; do
+until grep -q '"value":\[[0-9.]*,"1"\]' <<<"$(docker exec "$C" wget -qO- 'http://localhost:9090/api/v1/query?query=up' 2>/dev/null)"; do
     (( SECONDS >= deadline )) && { echo "self-scrape never produced up==1" >&2; exit 1; }
     sleep 2
 done
 
 deadline=$((SECONDS + 60))
-until docker exec "$C" wget -qO- 'http://localhost:9090/api/v1/query?query=prometheus_tsdb_head_samples_appended_total' 2>/dev/null | grep -qE '"value":\[[0-9.]*,"[1-9][0-9]*"'; do
+until grep -qE '"value":\[[0-9.]*,"[1-9][0-9]*"' <<<"$(docker exec "$C" wget -qO- 'http://localhost:9090/api/v1/query?query=prometheus_tsdb_head_samples_appended_total' 2>/dev/null)"; do
     (( SECONDS >= deadline )) && { echo "TSDB never appended samples" >&2; exit 1; }
     sleep 2
 done

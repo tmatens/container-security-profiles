@@ -36,7 +36,7 @@ dimensions:
       duration_seconds: 300
       confidence: high
       workload: profiles/workloads/mongo.sh
-      workload_sha256: "8bf910fe9fd9823678334a60c6aa19e54ebb4db26ca9a884752b8be727fa19eb"
+      workload_sha256: "92f7ac2097a9ea3b519c970470905331cae8dea8df0b08020327ba99d395d78d"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

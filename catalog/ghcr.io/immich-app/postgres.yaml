@@ -49,7 +49,7 @@ dimensions:
       duration_seconds: 240
       confidence: high
       workload: profiles/workloads/postgres.sh
-      workload_sha256: "0e9927503276921e3a549fe815e0cd6296684a0b2f6af301df0bff7028c9bc43"
+      workload_sha256: "7b8ad40aba2d709ae935fef8fa6aaac3c5c36a54bd9666524d746f0a2c0f6fe1"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

@@ -15,7 +15,9 @@ set -euo pipefail
 C="${MONGOCONTAINER}"
 
 deadline=$((SECONDS + 60))
-until docker exec "$C" mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null | grep -q 1; do
+# capture-then-match — never `producer | grep -q` under pipefail (grep's early
+# exit SIGPIPEs the producer and a matching response reads as failure).
+until grep -q 1 <<<"$(docker exec "$C" mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null)"; do
     if (( SECONDS >= deadline )); then
         echo "mongod did not answer ping in 60s" >&2
         exit 1

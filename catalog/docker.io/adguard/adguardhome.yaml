@@ -32,7 +32,7 @@ dimensions:
       duration_seconds: 300
       confidence: high
       workload: profiles/workloads/adguardhome.sh
-      workload_sha256: "f13b26b5364d83023be8769c90e11c4d185c802633981ead57f3a4e89263b84f"
+      workload_sha256: "24ee5743427395b4658a736f7eb0adca366ddfeaf7002b3baf784d5a745bb004"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

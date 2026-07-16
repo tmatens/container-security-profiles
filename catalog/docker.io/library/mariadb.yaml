@@ -38,7 +38,7 @@ dimensions:
       duration_seconds: 80
       confidence: high
       workload: profiles/workloads/mariadb.sh
-      workload_sha256: "d635cdf942f7d66dd26059cd67aa805906720cc42fcc806735a3c33e97ab66ad"
+      workload_sha256: "db93f70a728265fa0e9a798a17b4859ed408200a113782b3b7a284f5d88c65aa"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

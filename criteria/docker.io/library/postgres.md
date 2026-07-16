@@ -1,7 +1,7 @@
 # postgres — validation criteria
 
 Per-image acceptance criteria for the `docker.io/library/postgres` profile
-(compose-lint#359). Validated against `postgres:16@sha256:fe03a760…`.
+(compose-lint#359). Validated against `postgres:16@sha256:17e67d7b…`.
 
 ## Representative workload / correctness check
 `profiles/workloads/postgres.sh` — connect + CREATE/INSERT/SELECT/DROP + a SIGHUP

@@ -33,7 +33,7 @@ dimensions:
       duration_seconds: 900
       confidence: high
       workload: profiles/workloads/prometheus.sh
-      workload_sha256: "d454e26bdcc89c9903e35e6f9dc4f6b30bc7992bc7043f9b8bb9132563c05393"
+      workload_sha256: "d7482a9f3546c0520ec8fb322abeba3135e6b953b36aa62e19df321d6b544d27"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -77,7 +77,7 @@ dimensions:
       duration_seconds: 120
       confidence: high
       workload: profiles/workloads/prometheus.sh
-      workload_sha256: "d454e26bdcc89c9903e35e6f9dc4f6b30bc7992bc7043f9b8bb9132563c05393"
+      workload_sha256: "d7482a9f3546c0520ec8fb322abeba3135e6b953b36aa62e19df321d6b544d27"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

@@ -2,7 +2,7 @@
 
 Per-image acceptance criteria for the `docker.io/valkey/valkey` profile (immich's
 redis; a redis-compatible server used far beyond immich). Validated against
-`valkey:9@sha256:4963247…`, derived by drop-test against immich's deployment
+`valkey:9@sha256:8e8d64b4…`, derived by drop-test against immich's deployment
 invocation.
 
 ## Representative workload / correctness check

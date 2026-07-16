@@ -1,0 +1,67 @@
+# httpd (Apache) — minimum Linux capabilities, derived by drop-test against the
+# default invocation. This profile trims the full Docker default cap set 14 -> 3.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[NET_BIND_SERVICE, SETGID, SETUID].
+# The MASTER/WORKER split shape (the caddy contrast): the master stays root and
+# forks workers that setuid/setgid to www-data — so both the :80 bind and the
+# worker drop are load-bearing. NET_BIND_SERVICE is scoped to the hardened
+# sysctl posture net.ipv4.ip_unprivileged_port_start=1024 pinned during
+# derivation (docker defaults 0, where it reads falsely-removable — same scope
+# note as traefik).
+#
+# THE SHARP EDGE THIS PROFILE PROVES: with SETGID dropped, httpd KEEPS SERVING
+# with ROOT workers ("workers running as ROOT: uid=0" in the evidence) — a
+# content-only check false-passes and would derive the drop as safe while
+# silently removing the privilege separation. The workload's non-root worker
+# uid assert is mandatory for any re-derivation.
+# See criteria/docker.io/library/httpd.md.
+schema_version: "1.3"
+image: docker.io/library/httpd
+applies_to:
+  tags: ["2.4"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE, SETGID, SETUID]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/httpd@sha256:305fd8326a27a137fedb8900f26375699ab233cc37793f35cf5d7c65671fb252
+      validated_date: "2026-07-16"
+      duration_seconds: 240
+      confidence: high
+      workload: profiles/workloads/httpd.sh
+      workload_sha256: "94d1ea3488804864d96ef091f91cb619b2bc01975952b504549071c56d55aa42"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: FSETID, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: FOWNER, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: MKNOD, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: NET_RAW, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: SETGID, required: true, observed: "httpd workers running as ROOT or not found (drop failed): uid=0"}
+          - {removed: SETUID, required: true, observed: "container exited: [core:alert] AH00050: Child returned a Fatal error... Apache is exiting!"}
+          - {removed: SETFCAP, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: SETPCAP, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: NET_BIND_SERVICE, required: true, observed: "container failed to start: AH00015: Unable to open logs"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: KILL, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}

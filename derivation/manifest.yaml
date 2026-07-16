@@ -411,3 +411,32 @@ images:
     note: >-
       read_only:true, tmpfs:[] — NOT EVEN /tmp; all writes land in the
       /config+/cache VOLUMEs. Spec: csd testdata/drop-test/jellyfin-fs.yaml.
+
+  - profile: catalog/docker.io/pihole/pihole.yaml
+    image: docker.io/pihole/pihole
+    tag: "2026.07.2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/pihole.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETFCAP, SETGID,
+      SETUID], DNS-only scope. FOURTH privilege shape: root entrypoint
+      SETCAPs the FTL binary (SETFCAP genuinely required); FTL runs non-root
+      with file-cap NET_BIND_SERVICE for :53. HARD CONSTRAINT: NO
+      no-new-privileges (nnp blocks file-cap acquisition -> can never bind
+      :53 under the pinned privileged-port sysctl) — the only no-nnp profile.
+      Over-grant finding confirmed: NET_RAW/SYS_NICE/etc all removable.
+      Workload digs pi.hole (answered locally — no upstream in the loop).
+      Spec: csd testdata/drop-test/pihole-caps.yaml.
+
+  - profile: catalog/docker.io/minio/minio.yaml
+    image: docker.io/minio/minio
+    tag: "RELEASE.2025-09-07T16-13-09Z"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/minio.sh
+    note: >-
+      ZERO-CAP as root (jellyfin-class): static Go binary, unprivileged
+      :9000, VOLUME-only writes. Workload = real S3 mb/put/get via the pinned
+      mc sidecar (MC_HOST_ env alias = config-free probe). Spec: csd
+      testdata/drop-test/minio-caps.yaml.

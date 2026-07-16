@@ -502,3 +502,30 @@ images:
       monitor CRUD is socket.io-only (no REST for a curl probe), so ping
       monitors' NET_RAW is UNMEASURED and excluded (documented). Spec: csd
       testdata/drop-test/uptime-kuma-caps.yaml.
+
+  - profile: catalog/quay.io/keycloak/keycloak.yaml
+    image: quay.io/keycloak/keycloak
+    tag: "26.4"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/keycloak.sh
+    note: >-
+      ZERO-CAP, non-root by construction (USER 1000), unprivileged :8080, H2
+      state. start-dev scope (postgres-prod variant a follow-up, expected
+      same []). HARNESS NOTE: UBI-micro base has NO awk — read /proc/1/status
+      in pure shell. Workload = admin token + realm create/readback. Spec:
+      csd testdata/drop-test/keycloak-caps.yaml.
+
+  - profile: catalog/docker.io/adguard/adguardhome.yaml
+    image: docker.io/adguard/adguardhome
+    tag: "v0.107.78"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/adguardhome.sh
+    note: >-
+      cap_add:[DAC_OVERRIDE, NET_BIND_SERVICE], DNS-only. Clean contrast to
+      pihole: AGH stays ROOT (no file-cap/user drop) so NO SETFCAP, NO
+      SETUID/SETGID, and nnp STAYS COMPATIBLE (pihole must drop nnp). :53
+      under the pinned sysctl. Workload adds a LOCAL rewrite (csd.test ->
+      127.0.0.1) so resolution has no upstream in the loop. Spec: csd
+      testdata/drop-test/adguardhome-caps.yaml.

@@ -65,13 +65,18 @@ capture-then-match responses.
   re-derive it (grafting a GPU into the VM was judged not worth it,
   homelab decision 2026-07-16). On a digest bump, re-run the derivation
   manually on a GPU host:
-  `sudo csd --observe devices --container <jf> --duration 310s
-  --workload profiles/workloads/jellyfin-transcode.sh
+  `sudo csd --observe devices --container <jf> --gadget-filter
+  --duration 310s --workload profiles/workloads/jellyfin-transcode.sh
   --format compose-lint-profile` with the container started as
   `docker run -d --device /dev/dri jellyfin/jellyfin:<tag>`.
-  Requires csd ≥ the build with in-gadget container filtering + digest
-  normalization (csd#407); before that, busy-host trace_open noise blows
-  the drop-rate gate and registry-qualified names derive un-pinned.
+  Requires csd ≥ the build with the opt-in `--gadget-filter` + digest
+  normalization (csd#407): without the filter, busy-host trace_open noise
+  blows the drop-rate gate (this derivation measured drop_rate 288
+  unfiltered vs 0 filtered); without the digest fix, registry-qualified
+  names derive un-pinned. The flag is opt-in because in-gadget filtering
+  observes zero events on some runtime/ig combinations (e.g. Docker 29's
+  containerd image store) — sanity-check `trace_health.events_recorded > 0`
+  on the run before trusting its output.
 
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the image default — root, no

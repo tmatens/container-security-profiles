@@ -53,6 +53,20 @@ Two hard consequences, both measured:
   logs a warning, priority/NTP features off).
 - **Pass criteria:** `pi.hole` resolves locally and FTL is uid 1000.
 
+## filesystem — derived by drop-test (NEGATIVE result)
+- **read_only: false.** pihole cannot run under a read-only rootfs as shipped.
+  Verified: run `--read-only` under pihole's published cap set with generous
+  tmpfs on the config/runtime dirs (`/etc/pihole`, `/etc/dnsmasq.d`, `/run`,
+  `/tmp`, `/var/log`) and the baseline still fails — the entrypoint `chown`s
+  **`/macvendor.db`** and `sed`-rewrites **`/crontab.txt`** at the **filesystem
+  root**, and the FTL auto-update mechanism writes **`/usr/bin/pihole-FTL`**.
+  None of these is relocatable to a tmpfs or a volume (you cannot tmpfs `/` or
+  `/usr/bin`), so no read-only + tmpfs configuration works.
+- This is a **derived negative**, not an un-derived gap: the reproducer
+  (`csd testdata/drop-test/pihole-fs.yaml`) exits 3 (baseline FAILED). A future
+  pihole that relocated these writes to a data dir could be re-derived.
+- **Pass criteria:** none — `read_only: true` is infeasible for this image.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **DNS-only.** DHCP mode requires NET_ADMIN and raw sockets — out of scope
   by design (the queue's boundary).

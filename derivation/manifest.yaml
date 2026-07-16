@@ -369,3 +369,20 @@ images:
       match, never `curl | grep -q` under pipefail (SIGPIPE 141 = false
       negative once the body outgrows the pipe buffer; burned three runs).
       Spec: csd testdata/drop-test/wordpress-caps.yaml.
+
+  - profile: catalog/docker.io/library/nextcloud.yaml
+    image: docker.io/library/nextcloud
+    tag: "32"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/nextcloud.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID]
+      — wordpress's set with rsync evidence (entrypoint rsync -a of ~700MB
+      into the docroot VOLUME needs the ownership/perms trio). In-stack: deps
+      mariadb (cataloged 11.4). LIFECYCLE QUIRK the harness must handle: a
+      fresh-docroot container cannot adopt an installed DB (boots
+      installed:false limbo) — per-trial DB reset + docker restart, install
+      re-runs under the trial's cap posture. :80 under the pinned
+      ip_unprivileged_port_start=1024. Spec: csd
+      testdata/drop-test/nextcloud-caps.yaml.

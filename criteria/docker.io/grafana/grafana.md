@@ -14,6 +14,19 @@ liveness:
   (go-plugin) returns a JSON verdict with a `status` field even when the target Loki
   is unreachable; a backend that failed to start does not.
 
+## capabilities — derived by drop-test
+- **cap_drop: [ALL], cap_add: [] (zero-cap).** grafana is a non-root service
+  (uid 472) on the unprivileged :3000, writing only to its `/var/lib/grafana`
+  data store — no capability is load-bearing. All 14 Docker defaults dropped
+  in turn (under the filesystem dimension's `read_only: true` + the data
+  volume, per the multi-dimension rule); the workload stayed correct every
+  time. **Confidence high.**
+- **Why this is published even though the reference already drops caps:** a
+  user running the stock `grafana` image has Docker's **default 14
+  capabilities** and has dropped nothing, so "you can `cap_drop: ALL`,
+  `cap_add: []`" is a real 14 → 0 reduction for them. The catalog answers the
+  capability question for grafana, not only the filesystem one.
+
 ## filesystem — derived by drop-test
 - **read_only: true, tmpfs: [].** Under a read-only rootfs with only the
   `/var/lib/grafana` data volume writable, grafana serves the UI, reads/writes its

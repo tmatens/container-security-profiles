@@ -19,6 +19,16 @@ runs, and it never touches loki's filesystem — no confound for the fs dimensio
 reusable helper lives in container-sec-derive at
 `testdata/drop-test/correctness/lib/sidecar.sh`.
 
+## capabilities — derived by drop-test
+- **cap_drop: [ALL], cap_add: [] (zero-cap).** loki is a non-root distroless
+  service (uid 10001) on the unprivileged :3100, writing only to its `/loki`
+  data store — no capability is load-bearing. All 14 Docker defaults dropped
+  in turn (under `read_only: true` + the `/loki` volume); the push/query
+  round-trip stayed correct every time. **Confidence high.**
+- Published explicitly so a user of the stock image (which carries Docker's
+  default 14 caps) sees the 14 → 0 reduction, not just the filesystem
+  dimension.
+
 ## filesystem — derived by drop-test
 - **read_only: true, tmpfs: [].** Under a read-only rootfs with only the `/loki`
   data dir writable, loki initialises all of its modules (ingester, querier, ruler

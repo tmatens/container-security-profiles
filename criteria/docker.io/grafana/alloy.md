@@ -21,6 +21,15 @@ container-sec-derive). A sidecar (not a host-side probe) works for any target
 network mode, independent of daemon location, and never touches alloy's filesystem —
 no confound for the fs dimension.
 
+## capabilities — derived by drop-test
+- **cap_drop: [ALL], cap_add: [] (zero-cap).** alloy is a non-root distroless
+  service (uid 473) on the unprivileged :12345, writing only to its
+  `storage.path` — no capability is load-bearing. All 14 Docker defaults
+  dropped in turn (under `read_only: true` + the storage volume); the pipeline
+  stayed live every time. **Confidence high.**
+- Published explicitly so a user of the stock image (default 14 caps) sees the
+  14 → 0 reduction, not just the filesystem dimension.
+
 ## filesystem — derived by drop-test
 - **read_only: true, tmpfs: [].** Under a read-only rootfs with only its
   storage.path location writable, alloy becomes ready and runs its pipeline — `/tmp`

@@ -440,3 +440,41 @@ images:
       :9000, VOLUME-only writes. Workload = real S3 mb/put/get via the pinned
       mc sidecar (MC_HOST_ env alias = config-free probe). Spec: csd
       testdata/drop-test/minio-caps.yaml.
+
+  - profile: catalog/docker.io/binwiederhier/ntfy.yaml
+    image: docker.io/binwiederhier/ntfy
+    tag: "v2.14.0"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/ntfy.sh
+    note: >-
+      cap_add:[NET_BIND_SERVICE] — root Go binary, default PRIVILEGED :80
+      listener, under the pinned ip_unprivileged_port_start=1024 posture
+      (high-port listen-http = zero-cap). Workload = publish/poll round-trip.
+      Spec: csd testdata/drop-test/ntfy-caps.yaml.
+
+  - profile: catalog/docker.io/binwiederhier/ntfy.yaml
+    image: docker.io/binwiederhier/ntfy
+    tag: "v2.14.0"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/ntfy.sh
+    note: >-
+      read_only:true, tmpfs:[] — in-memory store writes nothing; cache/
+      attachments add a data volume, not tmpfs. Spec: csd
+      testdata/drop-test/ntfy-fs.yaml.
+
+  - profile: catalog/docker.io/library/haproxy.yaml
+    image: docker.io/library/haproxy
+    tag: "3.2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/haproxy.sh
+    note: >-
+      ZERO-CAP, non-root by construction (USER haproxy). TEACHING: non-root +
+      cap_add gives NO effective caps in docker (no ambient), so privileged
+      :80 is impossible in this image — publish an unprivileged frontend port
+      instead (contrast pihole's file-cap bridge). In-stack caddy dep; config
+      written by the command to /tmp (no default config ships; committed
+      specs cannot carry bind mounts). Spec: csd
+      testdata/drop-test/haproxy-caps.yaml.

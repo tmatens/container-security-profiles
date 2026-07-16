@@ -35,6 +35,15 @@ variant of the redis sharp edge.
   traefik; the derivation pins the sysctl).
 - **Pass criteria:** default page served **and** a worker runs as uid 33.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/usr/local/apache2/logs].** httpd writes its pid
+  file and logs to `/usr/local/apache2/logs` at startup; under a read-only rootfs
+  it fails to start (`AH00099: could not create /usr/local/apache2/logs/httpd.pid`)
+  without that dir writable. It is the only required tmpfs — `/tmp` was
+  drop-tested and comes out **not required**.
+- **Pass criteria:** the default page serves under `read_only:true` with
+  `tmpfs:[/usr/local/apache2/logs]`, and dropping that tmpfs breaks startup.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the image default — root master,
   bundled `httpd.conf`, no content mounts, `no-new-privileges`, the pinned

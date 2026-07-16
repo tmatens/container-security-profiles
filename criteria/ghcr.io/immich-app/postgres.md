@@ -40,6 +40,17 @@ An over-hardening (drop SETUID) makes the DB unhealthy and immich never starts. 
 the minimum is confirmed against immich's actual usage, not only the drop-test
 workload. (App-tier verification is not yet a schema field; recorded here.)
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/etc/postgresql, /var/run/postgresql].** Two startup
+  writes must land on a writable path: postgres creates its unix socket + lock in
+  `/var/run/postgresql`, and immich's entrypoint copies a tuned `postgresql.conf`
+  into `/etc/postgresql`. Both drop-test **required**. The data dir
+  `/var/lib/postgresql/data` is a **persistent VOLUME** (never tmpfs); `/tmp` was
+  drop-tested and comes out **not required**. This is the library-`postgres` fs
+  shape plus the `/etc/postgresql` config-copy immich's image adds.
+- **Pass criteria:** the CREATE/INSERT/SELECT workload + SIGHUP reload pass under
+  `read_only:true` with both tmpfs paths, and dropping either breaks startup.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): immich's — root (no `user:` override),
   the `${DB_DATA_LOCATION}` data-dir bind, `POSTGRES_*` env, `no-new-privileges`.

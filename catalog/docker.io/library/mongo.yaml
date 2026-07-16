@@ -14,9 +14,11 @@
 # SYS_NICE` for NUMA hosts, but it is not in the Docker default set and mongod
 # treats a failed setpriority as a warning; nothing beyond the gosu drop is
 # load-bearing under this invocation. See criteria/docker.io/library/mongo.md.
+# filesystem: read_only:true, tmpfs:[/tmp]. The data dirs /data/db and
+# /data/configdb are declared VOLUMEs (persistent). Under a read-only rootfs
+# mongod additionally needs /tmp writable — it creates its unix socket
+# (/tmp/mongodb-27017.sock) there. Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: docker.io/library/mongo
 applies_to:
@@ -67,3 +69,34 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: mongosh round-trip ok, mongod uid=999 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: mongosh round-trip ok, mongod uid=999 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: mongosh round-trip ok, mongod uid=999 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/tmp]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/mongo@sha256:3ce3de7f40e914034b03b7dec654005ab54f7dc8306937e44ec6760d9e9409a1
+      validated_date: "2026-07-16"
+      duration_seconds: 5
+      confidence: high
+      workload: profiles/workloads/mongo.sh
+      workload_sha256: "92f7ac2097a9ea3b519c970470905331cae8dea8df0b08020327ba99d395d78d"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: true, observed: "container exited: {'t':{'$date':'2026-07-16T20:55:24.945+00:00'},'s':'F',  'c':'ASSERT',   'id':23092,   'ctx':'initandl"}

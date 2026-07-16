@@ -33,6 +33,14 @@ hardened to this minimum (alongside the hardened DB), and immich's real REST API
 against immich's actual usage, not only the PING/SET/GET workload. (App-tier
 verification is not yet a schema field; recorded here.)
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** valkey's RDB/AOF live in `/data` (not a declared
+  VOLUME in this image — a persistent bind/named volume in production, never
+  tmpfs). Under `--read-only` with `/data` writable it serves the PING + SET/GET
+  round-trip with no additional tmpfs; `/tmp` drop-tests **not required**.
+- **Pass criteria:** PING + SET/GET and the non-root uid assert pass under
+  `read_only:true` (with `/data` writable) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): immich's — root, **no data volume**,
   `no-new-privileges`, no command override. With a foreign-owned data volume the

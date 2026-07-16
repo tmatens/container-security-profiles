@@ -44,12 +44,33 @@ is exempt from the observation-window floor (ADR-017 §8).
     Dropping it makes every per-process metric collect as **0** — the drop-test
     detects this via the non-zero `fds_open` check. (An earlier non-null check
     missed it and wrongly derived it removable, regressing production.)
-  - `SYS_ADMIN` — **removable**: the image ships **no `ebpf.plugin`**, so
-    `netdata.conf`'s `ebpf=yes` is a no-op and `SYS_ADMIN` gates nothing (no
-    `ebpf.*` charts; removing it changes nothing).
+  - `SYS_ADMIN` — **removable for this profile's exercised scope (host +
+    per-process monitoring)**, but see the coverage caveat below: it is NOT
+    removable if you rely on per-container **network-interface** metrics. The
+    ebpf angle is moot here (the image ships **no `ebpf.plugin`**, so
+    `netdata.conf`'s `ebpf=yes` is a no-op), but `SYS_ADMIN` has a second use the
+    workload does not drive — see below.
   - `CHOWN`, `FOWNER` — removable: netdata stayed correct (per-process metrics
     non-zero) without them. `CHOWN`'s absence only produced cosmetic startup log
     noise from a stale alarm-notify cache (a leak, since cleared), not a
     functional loss.
 - **Verified minimum:** `cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]`
   (drop `SYS_ADMIN` only from the 5-cap grant). Matches the live deploy.
+
+### Coverage caveat — SYS_ADMIN and per-container network monitoring
+This minimum is derived for **host and per-process monitoring** — what the
+representative workload exercises. It does **not** cover netdata's
+**per-container network-interface** metrics. Those are collected by the
+`cgroup-network` helper, which enters each container's network namespace via
+`setns(CLONE_NEWNET)` to enumerate its interfaces — and `setns` into a network
+namespace **requires `CAP_SYS_ADMIN`**. Verified directly under this profile's
+cap set: without `SYS_ADMIN`, entering a running container's netns fails
+`Operation not permitted`; with it, the interfaces enumerate. So a deployment
+that relies on per-container network charts must **add `SYS_ADMIN`** back.
+
+This is a deliberate scope boundary, not a silent gap: `SYS_ADMIN` is a broad,
+escape-prone capability, and host + per-process monitoring — the common case — is
+genuinely `SYS_ADMIN`-free. But the honest statement is "removable *for this
+feature set*," not "removable." (Caught by adversarial re-derivation: the original
+workload asserted per-process metrics only, so the `setns` path was never
+exercised.)

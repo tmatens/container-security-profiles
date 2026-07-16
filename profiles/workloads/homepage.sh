@@ -31,7 +31,9 @@ docker exec "${C}" wget -qO- "http://localhost:3000/_next/image?url=%2Ficon.png&
 sleep 2
 
 # Correct only if the cache write did not fail on a read-only filesystem.
-if docker logs "${C}" 2>&1 | grep -qiE "mkdir '/app/.next/cache'|read-only file system"; then
+# capture-then-match — `docker logs | grep -q` under pipefail SIGPIPEs the
+# producer on a match, which here would read the error as ABSENT (false pass).
+if grep -qiE "mkdir '/app/.next/cache'|EROFS|read-only file system" <<<"$(docker logs "${C}" 2>&1)"; then
     echo "homepage could not write /app/.next/cache" >&2
     exit 1
 fi

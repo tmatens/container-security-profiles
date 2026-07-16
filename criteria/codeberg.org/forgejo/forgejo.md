@@ -20,12 +20,13 @@ profile trims it **14 → 5**.
   root or with git-over-SSH broken).
 
 ## capabilities — derived by drop-test
-- **cap_drop: [ALL], cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT].**
+- **cap_drop: [ALL], cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETGID, SETUID, SYS_CHROOT].**
   Baseline `cap_drop:ALL` + the Docker default set on a **fresh** `/data` volume (the
   image declares `/data` as a VOLUME, so each trial gets a fresh, root-owned volume —
   reproducing a first deploy, so the root→git chown fires); each default is dropped
-  in turn and the workload re-verified. All five are **startup** caps — runtime
-  observation records them as unused, so drop-test is the authoritative source.
+  in turn and the workload re-verified. Five are **startup** caps — runtime
+  observation records them as unused, so drop-test is the authoritative source — and
+  NET_BIND_SERVICE gates sshd's `:22` bind under the hardened port posture (below).
 - **The minimum is the UNION across both daemons.** `gitea web` needs CHOWN (chown
   the fresh `/data` to the git user), DAC_OVERRIDE (setup writes it doesn't own as
   root — e.g. `environment-to-ini` rewriting the git-owned `app.ini`), and
@@ -37,11 +38,20 @@ profile trims it **14 → 5**.
   correctness check would derive a 4-cap minimum that breaks SSH. Because the
   deployment publishes `2222:22` for Git SSH, the profile keeps SYS_CHROOT and the
   workload exercises SSH.
-- **NET_BIND_SERVICE is a genuine over-grant here.** sshd binds the privileged `:22`
-  but runs **as root**, so it needs no capability to do so (and the web binds the
-  unprivileged `:3000`). Dropping NET_BIND_SERVICE leaves everything working. This is
-  a runtime-posture judgement: it holds because both listeners that bind low ports
-  run as root — a non-root process binding `:22` would need it.
+- **NET_BIND_SERVICE gates sshd's `:22` bind, but only under the hardened port
+  posture.** sshd binds the privileged `:22`; being **root is not sufficient** — under
+  `cap_drop:ALL` a uid-0 process has an empty effective set and, when
+  `net.ipv4.ip_unprivileged_port_start` is the hardened `1024`, cannot bind a port
+  below it. Verified directly against the pinned image: with the 5-cap set (no
+  NET_BIND_SERVICE) sshd binds `:22` at Docker's **default** posture (`0`, where all
+  ports are unprivileged) but at `1024` fails `Bind to port 22 on :: failed:
+  Permission denied` and git-over-SSH is dead. So NET_BIND_SERVICE reads **falsely
+  removable** in a posture-0 drop-test and is genuinely **required** under the
+  hardened posture — the same posture `httpd`/`traefik`/`nextcloud`/`ntfy` pin. The
+  profile therefore includes it and scopes it to
+  `net.ipv4.ip_unprivileged_port_start=1024` (schema 1.3 `run_config` has no sysctls
+  field, so the scope lives in the profile header + here). The web listener binds the
+  unprivileged `:3000` and needs no capability at any posture.
 - **Pass criteria:** the workload passes (web + git-over-HTTP + sshd-reaches-auth)
   **and** `gitea web` runs as uid 1000; dropping CHOWN, DAC_OVERRIDE, SETUID, SETGID,
   or SYS_CHROOT breaks correctness with the signatures recorded in `drop_test.checks`.

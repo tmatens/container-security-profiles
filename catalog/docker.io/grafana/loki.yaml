@@ -36,7 +36,7 @@ dimensions:
       duration_seconds: 30
       confidence: high
       workload: profiles/workloads/loki.sh
-      workload_sha256: "44bffbd96f1370095e4e081b90d035cd6d71168926990e4d514580c4ef7c2c5b"
+      workload_sha256: "1d77529ff98497ec49c6bcbf5d7218e9b34f7f574ff88a9bf8b6e31a5195fe6e"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -80,7 +80,7 @@ dimensions:
       duration_seconds: 40
       confidence: high
       workload: profiles/workloads/loki.sh
-      workload_sha256: "44bffbd96f1370095e4e081b90d035cd6d71168926990e4d514580c4ef7c2c5b"
+      workload_sha256: "1d77529ff98497ec49c6bcbf5d7218e9b34f7f574ff88a9bf8b6e31a5195fe6e"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

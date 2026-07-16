@@ -14,7 +14,9 @@ set -euo pipefail
 C="${PIHOLECONTAINER}"
 
 deadline=$((SECONDS + 90))
-until docker logs "$C" 2>&1 | grep -q "listening on .* port 53"; do
+# capture-then-match — `docker logs | grep -q` under pipefail SIGPIPEs the
+# producer once the log outgrows the pipe buffer, turning a match into failure.
+until grep -q "listening on .* port 53" <<<"$(docker logs "$C" 2>&1)"; do
     (( SECONDS >= deadline )) && { echo "FTL never listened on 53" >&2; exit 1; }
     sleep 2
 done

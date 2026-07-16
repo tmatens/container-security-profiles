@@ -9,9 +9,12 @@
 # would falsely derive both as removable (same shape as valkey, same lesson).
 #
 # run_config is the image default: no user: override, no data bind (the image's
-# own /data anonymous volume, initialised redis-owned, so nothing is chowned).
-# A deployment binding a foreign-owned data volume would need CHOWN back — the
-# minimum is scoped to the invocation in run_config. See
+# own /data anonymous volume, initialised redis-owned, so nothing is chowned),
+# plus no-new-privileges:true (the catalog convention, matching valkey — gosu's
+# drop is a capability-gated setuid syscall, not a setuid-bit escalation, so
+# no-new-privileges does not block it; re-derivation confirmed [SETGID, SETUID]
+# under it). A deployment binding a foreign-owned data volume would need CHOWN
+# back — the minimum is scoped to the invocation in run_config. See
 # criteria/docker.io/library/redis.md.
 #
 # filesystem: not yet derived. Absence means not tested for this image —
@@ -31,11 +34,11 @@ dimensions:
       sidecar_schema_version: "1.5"
       observer: drop-test
       validated_image: docker.io/library/redis@sha256:d30960f73a599496d8b2802c97758bab6b1cd421fd06337f837779c47a57e1f3
-      validated_date: "2026-07-14"
+      validated_date: "2026-07-16"
       duration_seconds: 47
       confidence: high
       workload: profiles/workloads/redis.sh
-      workload_sha256: "c90e93dc8f7ff569b77a982f95c2df7931e8233b4491f5bde2d71a56b4982fc7"
+      workload_sha256: "bbe4e8fcc050581d48d2dd45a086ee1f4d471845bf8e27a6ca5147c6bc688cce"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -47,7 +50,7 @@ dimensions:
         network: ""
         pid: ""
         devices: []
-        security_opt: []
+        security_opt: ["no-new-privileges:true"]
         mounts: []
         env: []
       drop_test:

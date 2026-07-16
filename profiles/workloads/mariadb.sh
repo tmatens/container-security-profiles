@@ -14,8 +14,10 @@ set -euo pipefail
 : "${MARIADBCONTAINER:?MARIADBCONTAINER must be set}"
 C="${MARIADBCONTAINER}"
 
+# Probes exec as the mysql user, never root — a root probe's own needs would
+# pollute the derived minimum (the rabbitmq lesson).
 deadline=$((SECONDS + 45))
-until docker exec "$C" sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -e "SELECT 1" >/dev/null 2>&1'; do
+until docker exec --user mysql "$C" sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" -e "SELECT 1" >/dev/null 2>&1'; do
     if (( SECONDS >= deadline )); then
         echo "mariadb did not accept an app-user connection in 45s" >&2
         exit 1
@@ -23,7 +25,7 @@ until docker exec "$C" sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_US
     sleep 1
 done
 
-out="$(docker exec "$C" sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" "$MARIADB_DATABASE" -N -e "CREATE TABLE IF NOT EXISTS csd_probe(id INT); INSERT INTO csd_probe VALUES(42); SELECT id FROM csd_probe LIMIT 1; DROP TABLE csd_probe;"' 2>&1)"
+out="$(docker exec --user mysql "$C" sh -c 'MYSQL_PWD=$MARIADB_PASSWORD mariadb -u"$MARIADB_USER" "$MARIADB_DATABASE" -N -e "CREATE TABLE IF NOT EXISTS csd_probe(id INT); INSERT INTO csd_probe VALUES(42); SELECT id FROM csd_probe LIMIT 1; DROP TABLE csd_probe;"' 2>&1)"
 if [ "$out" != 42 ]; then
     echo "workload round-trip failed (got: ${out##*$'\n'})" >&2
     exit 1

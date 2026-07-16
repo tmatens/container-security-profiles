@@ -36,7 +36,7 @@ dimensions:
       duration_seconds: 420
       confidence: high
       workload: profiles/workloads/rabbitmq.sh
-      workload_sha256: "5865d897d5e820a66d9d98b3c8b93d9106acfba3cfab8fb00d147369faaf8709"
+      workload_sha256: "30930ad9a33f0aaf7426f4091476c844b381388588ca73f841ed067e1d6ada96"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

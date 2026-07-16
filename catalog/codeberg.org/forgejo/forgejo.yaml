@@ -1,22 +1,29 @@
 # forgejo — minimum Linux capabilities, derived by drop-test against forgejo's own
 # default s6-init invocation (the deployment sets no cap_drop, so it runs on the
-# FULL Docker default cap set — this profile trims it 14 -> 5).
+# FULL Docker default cap set — this profile trims it 14 -> 6).
 #
-# capabilities: cap_drop:[ALL] + cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT].
-# All five are STARTUP caps, invisible to runtime observation. The container runs
-# TWO root daemons under s6, and the minimum is the UNION across both:
+# capabilities: cap_drop:[ALL] + cap_add:[CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETGID, SETUID, SYS_CHROOT].
+# The container runs TWO root daemons under s6, and the minimum is the UNION across both:
 #   - `gitea web` — chowns a FRESH /data to the git user (CHOWN; DAC_OVERRIDE for the
 #     ensuing setup writes, e.g. root rewriting the git-owned app.ini via
 #     environment-to-ini) and drops root -> git (uid 1000) via su-exec (SETUID/SETGID).
 #   - `sshd` — stays root, but OpenSSH forks a pre-auth privilege-separation child
 #     that chroots per connection (SYS_CHROOT). Without it the web API still answers
 #     200 while git-over-SSH is silently dead ("Connection reset") — so the workload
-#     exercises SSH too. See the criteria doc's drop-test evidence + caveats.
+#     exercises SSH too. sshd binds the privileged :22, so it needs NET_BIND_SERVICE
+#     — but ONLY under the hardened net.ipv4.ip_unprivileged_port_start=1024 posture
+#     (see below). See the criteria doc's drop-test evidence + caveats.
 #
-# The 9 removed Docker defaults (FSETID, FOWNER, MKNOD, NET_RAW, SETFCAP, SETPCAP,
-# NET_BIND_SERVICE, KILL, AUDIT_WRITE) are genuine over-grants under this
-# root-daemon invocation: NET_BIND_SERVICE is not needed because sshd binds :22 as
-# root (and the web binds the unprivileged :3000). See the criteria doc.
+# NET_BIND_SERVICE is scoped to the hardened sysctl posture
+# net.ipv4.ip_unprivileged_port_start=1024 (the same posture httpd/traefik/nextcloud/
+# ntfy pin). Under Docker's default (0), ALL ports are unprivileged and sshd binds
+# :22 with no capability, so a posture-0 drop-test reads it FALSELY removable
+# (verified: at posture 0 sshd binds :22 under the 5-cap set; at 1024 the same set
+# fails "Bind to port 22 ... Permission denied"). Schema 1.3 run_config has no
+# sysctls field, so the posture scope lives in this header + the criteria doc (the
+# run_config.sysctls migration is tracked upstream). The other 8 removed Docker
+# defaults (FSETID, FOWNER, MKNOD, NET_RAW, SETFCAP, SETPCAP, KILL, AUDIT_WRITE)
+# are genuine over-grants under this root-daemon invocation regardless of posture.
 #
 # filesystem: not yet derived. Absence means not tested for this image —
 # not that it cannot run read-only.
@@ -28,18 +35,18 @@ status: validated
 dimensions:
   capabilities:
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT]
+    cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETGID, SETUID, SYS_CHROOT]
     derivation:
       tool: container-sec-derive
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
       validated_image: codeberg.org/forgejo/forgejo@sha256:eda2e378442d2f18cfa563994f8ad66e71f04ac9c3bb4259cc57bdd641890f5c
-      validated_date: "2026-07-15"
+      validated_date: "2026-07-16"
       duration_seconds: 83
       confidence: high
       workload: profiles/workloads/forgejo.sh
-      workload_sha256: "f34489ade64af12e95be08b67a30a736893e1f41db724c5d9c3d09b4234fccff"
+      workload_sha256: "359e92d61d1abeebc3f087f705f156cc1ca5f577b5eb3878819f8fb5cea71ed6"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -66,7 +73,7 @@ dimensions:
           - {removed: SETUID, required: true, observed: "container exited: su-exec: setuid(1000): Operation not permitted"}
           - {removed: SETFCAP, required: false, observed: "correct: web+API up, gitea uid=1000 (non-root), admin+repo+git-push over HTTP, sshd reaches auth"}
           - {removed: SETPCAP, required: false, observed: "correct: web+API up, gitea uid=1000 (non-root), admin+repo+git-push over HTTP, sshd reaches auth"}
-          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: web+API up, gitea uid=1000 (non-root), admin+repo+git-push over HTTP, sshd reaches auth"}
+          - {removed: NET_BIND_SERVICE, required: true, observed: "under the pinned net.ipv4.ip_unprivileged_port_start=1024 posture, sshd fails to bind: 'Bind to port 22 on :: failed: Permission denied' (git-over-SSH dead). Posture-scoped: at Docker's default (0) it reads falsely removable"}
           - {removed: SYS_CHROOT, required: true, observed: "sshd never reached auth (privsep failed -> git-over-SSH dead): Connection reset by ::1 port 22"}
           - {removed: KILL, required: false, observed: "correct: web+API up, gitea uid=1000 (non-root), admin+repo+git-push over HTTP, sshd reaches auth"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: web+API up, gitea uid=1000 (non-root), admin+repo+git-push over HTTP, sshd reaches auth"}

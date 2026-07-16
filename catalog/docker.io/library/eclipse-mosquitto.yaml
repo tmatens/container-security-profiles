@@ -35,7 +35,7 @@ dimensions:
       duration_seconds: 180
       confidence: high
       workload: profiles/workloads/mosquitto.sh
-      workload_sha256: "67804a5f049e42fa99a9ff6c0091b59c85898b1f56bb15727f61d14274b2fb3d"
+      workload_sha256: "f82b6e4cc300fb546dc0d741f91c41f1267af7f58386e4bf35007d85ffab235b"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0
@@ -79,7 +79,7 @@ dimensions:
       duration_seconds: 60
       confidence: high
       workload: profiles/workloads/mosquitto.sh
-      workload_sha256: "67804a5f049e42fa99a9ff6c0091b59c85898b1f56bb15727f61d14274b2fb3d"
+      workload_sha256: "f82b6e4cc300fb546dc0d741f91c41f1267af7f58386e4bf35007d85ffab235b"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

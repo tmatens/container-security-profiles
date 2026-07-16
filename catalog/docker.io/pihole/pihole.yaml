@@ -43,7 +43,7 @@ dimensions:
       duration_seconds: 420
       confidence: high
       workload: profiles/workloads/pihole.sh
-      workload_sha256: "6091681f94c6be4a1176837cf58e289c1cb0fb75db47b31569d6313e632beb9c"
+      workload_sha256: "d1757e6543795069f71d3f0fd6cc1c043e48f0ad0a804c9aca2ce69b8c735161"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

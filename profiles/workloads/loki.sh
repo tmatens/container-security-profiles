@@ -39,7 +39,10 @@ fi
 
 start=$((ts - 300000000000)); end=$((ts + 300000000000))
 for _ in 1 2 3 4 5; do
-    if sc -s "http://localhost:3100/loki/api/v1/query_range?query=%7Bjob%3D%22csd%22%7D&start=$start&end=$end&limit=5" 2>/dev/null | grep -q csd-probe-line; then
+    # capture-then-match via herestring — never `sc | grep -q` under pipefail
+    # (grep -q's early exit SIGPIPEs curl → a matching but large query result
+    # can false-negative once it outgrows the pipe buffer).
+    if grep -q csd-probe-line <<<"$(sc -s "http://localhost:3100/loki/api/v1/query_range?query=%7Bjob%3D%22csd%22%7D&start=$start&end=$end&limit=5" 2>/dev/null)"; then
         exit 0
     fi
     sleep 1

@@ -28,7 +28,9 @@ PROBE="${CSD_PROBE_CURL_IMAGE:-curlimages/curl@sha256:c1fe1679c34d9784c1b0d1e5f6
 sc() { docker run --rm --network "container:${C}" "$PROBE" "$@"; }
 
 deadline=$((SECONDS + 90))
-until docker logs "$C" 2>&1 | grep -q "Server startup complete"; do
+# capture-then-match — `docker logs | grep -q` under pipefail SIGPIPEs the
+# producer once the log outgrows the pipe buffer, turning a match into failure.
+until grep -q "Server startup complete" <<<"$(docker logs "$C" 2>&1)"; do
     (( SECONDS >= deadline )) && { echo "rabbitmq never reached startup complete" >&2; exit 1; }
     sleep 2
 done

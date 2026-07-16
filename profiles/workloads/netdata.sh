@@ -38,7 +38,10 @@ done
 
 # 2. HTTP API up and apps.plugin collecting.
 curl -fsS --max-time 5 "${API}/api/v1/info" >/dev/null || { echo "API down"; exit 1; }
-curl -fsS --max-time 5 "${API}/api/v1/charts" | grep -q '"apps\.' || { echo "apps.plugin not collecting"; exit 1; }
+# capture then grep — piping the (large) charts dump into `grep -q` can SIGPIPE
+# curl and, under pipefail, mark the pipeline failed despite a match.
+charts="$(curl -fsS --max-time 5 "${API}/api/v1/charts")" || { echo "charts API down"; exit 1; }
+grep -q '"apps\.' <<<"$charts" || { echo "apps.plugin not collecting"; exit 1; }
 
 # 3. CORRECTNESS: the netdata daemon dropped privileges (must NOT be uid 0/root).
 pid="$(docker inspect -f '{{.State.Pid}}' "$NDCONTAINER")"

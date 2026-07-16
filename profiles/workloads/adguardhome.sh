@@ -21,7 +21,9 @@ c="$(sc -s -o /dev/null -w '%{http_code}' --max-time 15 -X POST -H 'Content-Type
 r="$(sc -s -o /dev/null -w '%{http_code}' --max-time 10 -u csdadmin:CsdProbe-Pw-12345 -X POST -H 'Content-Type: application/json' -d '{"domain":"csd.test","answer":"127.0.0.1"}' http://localhost:80/control/rewrite/add 2>/dev/null)"
 [ "$r" = 200 ] || { echo "rewrite add failed: HTTP ${r:-none}" >&2; exit 1; }
 deadline=$((SECONDS+20))
-until docker exec "$C" nslookup csd.test 127.0.0.1 2>/dev/null | grep -qE "Address:[[:space:]]*127\.0\.0\.1$"; do
+# capture-then-match — never `producer | grep -q` under pipefail (grep's early
+# exit SIGPIPEs the producer and a matching response reads as failure).
+until grep -qE "Address:[[:space:]]*127\.0\.0\.1$" <<<"$(docker exec "$C" nslookup csd.test 127.0.0.1 2>/dev/null)"; do
     (( SECONDS >= deadline )) && { echo "AGH never resolved the local rewrite" >&2; exit 1; }
     sleep 2
 done

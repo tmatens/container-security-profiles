@@ -28,7 +28,7 @@ dimensions:
       duration_seconds: 30
       confidence: high
       workload: profiles/workloads/homepage.sh
-      workload_sha256: "bd9488e1f35dd68166a23e8f4bf25a792e0334e22826e867f0734bf86124dab9"
+      workload_sha256: "78802a2819707f8857b66cce4c91a399033e71ff4db60531ca736095f2f351c8"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

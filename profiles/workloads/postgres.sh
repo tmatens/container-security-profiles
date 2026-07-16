@@ -15,14 +15,16 @@ set -euo pipefail
 : "${PGUSER:=postgres}"
 : "${PGDATABASE:=postgres}"
 
+# Probes exec as the postgres user, never root — a root probe's own needs
+# would pollute the derived minimum (the rabbitmq lesson).
 psql_in_container() {
-    docker exec -e "PGPASSWORD=${PGPASSWORD}" "${PGCONTAINER}" \
+    docker exec --user postgres -e "PGPASSWORD=${PGPASSWORD}" "${PGCONTAINER}" \
         psql -v ON_ERROR_STOP=1 -U "${PGUSER}" -d "${PGDATABASE}" "$@"
 }
 
 # Wait until pg_isready.
 deadline=$((SECONDS + 60))
-until docker exec "${PGCONTAINER}" pg_isready -U "${PGUSER}" -q; do
+until docker exec --user postgres "${PGCONTAINER}" pg_isready -U "${PGUSER}" -q; do
     if (( SECONDS >= deadline )); then
         echo "postgres did not become ready in 60s" >&2
         exit 1
@@ -39,3 +41,14 @@ psql_in_container -c 'DROP TABLE csd_smoke;'
 docker kill --signal=SIGHUP "${PGCONTAINER}"
 sleep 1
 psql_in_container -c 'SELECT 1;'
+
+# CORRECTNESS: the server (PID 1) completed the root->postgres drop. Load-bearing:
+# with SETUID/SETGID dropped the entrypoint's gosu re-exec fails — a query-only
+# check must not bless a server still running as root. /proc is parsed tool-free
+# (no awk/cut — not guaranteed on minimal bases).
+uid="$(docker exec "${PGCONTAINER}" sh -c \
+    'while read -r k v _; do [ "$k" = "Uid:" ] && { echo "$v"; break; }; done </proc/1/status')"
+if [ "${uid:-0}" = 0 ] || [ -z "${uid}" ]; then
+    echo "postgres server is running as ROOT (privilege drop failed; uid='${uid}')" >&2
+    exit 1
+fi

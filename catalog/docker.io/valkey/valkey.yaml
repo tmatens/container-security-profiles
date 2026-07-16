@@ -43,7 +43,7 @@ dimensions:
       duration_seconds: 120
       confidence: high
       workload: profiles/workloads/valkey.sh
-      workload_sha256: "9620a73fa518820c0325a703f42ec4f4ded6af0cde13c620aa1dfaa7b8b067ed"
+      workload_sha256: "d0bfaf961f2b24c70d247118f97f96abf9e5492f70099b6ad8a3c27466706036"
       validated_via: [drop-test, ci-smoke]
       observation_backend:
         ig_version: v0.51.0

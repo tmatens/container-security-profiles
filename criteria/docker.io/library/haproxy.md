@@ -27,6 +27,16 @@ which changes nothing about capabilities.
 - **Pass criteria:** the proxied round-trip returns backend content and
   PID 1 is non-root, with every candidate dropped.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** haproxy is a static-binary reverse proxy that
+  writes nothing to its rootfs — under `--read-only` it proxies `:8080` to the
+  in-stack caddy backend with no tmpfs. Its config is supplied by a **read-only
+  config mount** at haproxy's default config path, so `/tmp` — which the
+  capabilities derivation's entrypoint writes the config into — drop-tests as
+  **not required** here.
+- **Pass criteria:** the proxied backend response succeeds and the process runs
+  non-root under `read_only:true` (config on a read-only mount) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation**: one HTTP frontend :8080 → one backend, `no-new-privileges`.
 - **Out of band**: Docker's default seccomp baseline; the in-stack upstream;

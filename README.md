@@ -28,9 +28,9 @@ services:
 | Image | Tags | Minimum (all dimensions apply as a unit) | Confidence |
 |---|---|---|---|
 | `codeberg.org/forgejo/forgejo` | `15` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, SYS_CHROOT]` | high |
-| `docker.io/grafana/alloy` | `v1.16.2` | `filesystem: read_only: true` | high |
-| `docker.io/grafana/grafana` | `13.0.2` | `filesystem: read_only: true` | moderate |
-| `docker.io/grafana/loki` | `3.7.2` | `filesystem: read_only: true` | high |
+| `docker.io/grafana/alloy` | `v1.16.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
+| `docker.io/grafana/grafana` | `13.0.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high (caps) · moderate (fs) |
+| `docker.io/grafana/loki` | `3.7.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/jellyfin/jellyfin` | `10.11` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/binwiederhier/ntfy` | `v2.14.0` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | high |
 | `docker.io/library/caddy` | `2` | `capabilities: cap_add: [NET_BIND_SERVICE]` · `filesystem: read_only: true` | high |
@@ -40,7 +40,7 @@ services:
 | `docker.io/library/mariadb` | `11.4` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/adguard/adguardhome` | `v0.107.78` | `capabilities: cap_add: [DAC_OVERRIDE, NET_BIND_SERVICE] (DNS-only, under ip_unprivileged_port_start=1024)` | high |
 | `docker.io/library/memcached` | `1.6` | `capabilities: cap_drop: [ALL] (zero-cap)` | high |
-| `docker.io/louislam/uptime-kuma` | `2` | `capabilities: cap_add: [DAC_OVERRIDE, FOWNER]` | moderate |
+| `docker.io/louislam/uptime-kuma` | `2` | `capabilities: cap_add: [DAC_OVERRIDE, FOWNER]` (ping monitors add `NET_RAW`) | high |
 | `docker.io/minio/minio` | `RELEASE.2025-09-07…` | `capabilities: cap_drop: [ALL] (zero-cap)` | high |
 | `docker.io/library/mongo` | `8.0` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `quay.io/keycloak/keycloak` | `26.4` | `capabilities: cap_drop: [ALL] (zero-cap, non-root)` | high |

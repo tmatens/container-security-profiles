@@ -1,6 +1,13 @@
-# loki — read-only-filesystem minimum, derived by drop-test. loki already runs
-# cap_drop:ALL and as a non-root user (uid 10001), so the value is the filesystem
-# dimension. The derived tmpfs minimum is EMPTY.
+# loki — capabilities AND read-only-filesystem, derived by drop-test.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[] — ZERO-cap. loki is a non-root
+# distroless service (uid 10001) on the unprivileged :3100 writing only to its
+# /loki data store, so no capability is load-bearing. Published explicitly so
+# a user of the stock image (which has Docker's default 14 caps) sees the
+# 14 -> 0 reduction, not just the filesystem dimension.
+#
+# filesystem: read_only:true, tmpfs:[] — /loki is a PERSISTENT VOLUME (NOT
+# tmpfs); the derived tmpfs minimum is EMPTY.
 #
 # filesystem: read_only:true, tmpfs:[]. Under a read-only rootfs with only its /loki
 # data dir writable, loki initialises all modules, becomes ready, ingests a pushed
@@ -16,6 +23,50 @@ applies_to:
   tags: ["3.7.2"]
 status: validated
 dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/grafana/loki@sha256:191d4fdfb7264f16989f0a57f320872620a5a7c2ceeec6229212c4190ec49b86
+      validated_date: "2026-07-16"
+      duration_seconds: 30
+      confidence: high
+      workload: profiles/workloads/loki.sh
+      workload_sha256: "44bffbd96f1370095e4e081b90d035cd6d71168926990e4d514580c4ef7c2c5b"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["loki-data:/loki"]
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: FSETID, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: FOWNER, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: MKNOD, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: NET_RAW, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: SETGID, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: SETUID, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: SETFCAP, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: SETPCAP, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: KILL, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: loki ready, log push (204) + query round-trip returned the line"}
   filesystem:
     read_only: true
     tmpfs: []

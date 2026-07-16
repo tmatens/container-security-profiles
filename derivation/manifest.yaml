@@ -498,10 +498,12 @@ images:
     workload: profiles/workloads/uptime-kuma.sh
     note: >-
       cap_add:[DAC_OVERRIDE, FOWNER] — root node writing sqlite+config under
-      /app/data; unprivileged :3001, no drop. MODERATE confidence: admin/
-      monitor CRUD is socket.io-only (no REST for a curl probe), so ping
-      monitors' NET_RAW is UNMEASURED and excluded (documented). Spec: csd
-      testdata/drop-test/uptime-kuma-caps.yaml.
+      /app/data; unprivileged :3001, no drop. HIGH confidence (#63): the
+      workload drives a RUNNING HTTP monitor over socket.io (probe = a sidecar
+      from the uptime-kuma image itself). Ping monitors add NET_RAW —
+      MEASURED by the paired uptime-kuma-ping-caps.yaml ([DAC_OVERRIDE, FOWNER,
+      NET_RAW]); excluded from the base minimum as a deployment choice. Spec:
+      csd testdata/drop-test/uptime-kuma-caps.yaml.
 
   - profile: catalog/quay.io/keycloak/keycloak.yaml
     image: quay.io/keycloak/keycloak
@@ -544,3 +546,37 @@ images:
       Unprivileged :8000. In-stack: deps redis (cataloged 8.2.7). Text-doc
       probe skips OCR but covers web->redis->celery->media. Spec: csd
       testdata/drop-test/paperless-ngx-caps.yaml.
+
+  - profile: catalog/docker.io/grafana/grafana.yaml
+    image: docker.io/grafana/grafana
+    tag: "13.0.2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/grafana.sh
+    note: >-
+      ZERO-CAP (#63): non-root uid 472, unprivileged :3000, data-volume-only
+      writes. Published so a stock-image user (default 14 caps) sees the 14->0
+      reduction, not just the fs dimension. Derived under the fs recommendation
+      (read_only:true + /var/lib/grafana). Spec: csd testdata/drop-test/grafana-caps.yaml.
+
+  - profile: catalog/docker.io/grafana/loki.yaml
+    image: docker.io/grafana/loki
+    tag: "3.7.2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/loki.sh
+    note: >-
+      ZERO-CAP (#63): non-root distroless uid 10001, unprivileged :3100,
+      /loki-only writes. Derived under read_only:true + /loki. Spec: csd
+      testdata/drop-test/loki-caps.yaml.
+
+  - profile: catalog/docker.io/grafana/alloy.yaml
+    image: docker.io/grafana/alloy
+    tag: "v1.16.2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/alloy.sh
+    note: >-
+      ZERO-CAP (#63): non-root distroless uid 473, unprivileged :12345,
+      storage.path-only writes. Derived under read_only:true + /var/lib/alloy.
+      Spec: csd testdata/drop-test/alloy-caps.yaml.

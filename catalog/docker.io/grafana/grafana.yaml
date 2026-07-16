@@ -1,7 +1,17 @@
-# grafana — read-only-filesystem minimum, derived by drop-test. grafana runs
-# correctly under read_only:true; its data store /var/lib/grafana (sqlite DB +
-# any installed plugins) is a PERSISTENT VOLUME (must survive restarts, NOT tmpfs).
-# The derived tmpfs minimum is EMPTY.
+# grafana — capabilities AND read-only-filesystem, derived by drop-test.
+#
+# capabilities: cap_drop:[ALL] + cap_add:[] — ZERO-cap. grafana is a non-root
+# service (uid 472) on the unprivileged :3000 writing only to its
+# /var/lib/grafana data store, so none of the Docker default 14 caps is
+# load-bearing. Published as an explicit dimension because a user running the
+# STOCK image has the default 14 caps and has not dropped anything: "you can
+# cap_drop:ALL, cap_add:[]" is a real 14 -> 0 reduction, even though the
+# hardened reference compose already drops them.
+#
+# filesystem: read_only:true, tmpfs:[]. grafana runs correctly under
+# read_only:true; its data store /var/lib/grafana (sqlite DB + any installed
+# plugins) is a PERSISTENT VOLUME (must survive restarts, NOT tmpfs). The
+# derived tmpfs minimum is EMPTY.
 #
 # filesystem: read_only:true, tmpfs:[]. Under a read-only rootfs with only the
 # /var/lib/grafana data volume writable, grafana serves the UI, reads/writes its
@@ -18,6 +28,50 @@ applies_to:
   tags: ["13.0.2"]
 status: validated
 dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/grafana/grafana@sha256:5dad0df181cb644a14e13617b913b261a54f7d4fd4510721dba420929f35bea2
+      validated_date: "2026-07-16"
+      duration_seconds: 30
+      confidence: high
+      workload: profiles/workloads/grafana.sh
+      workload_sha256: "d41070b8ff46d1fa4153e005712752546f7b411caf7cb70dc9f239116e840135"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: ["grafana-data:/var/lib/grafana"]
+        env: [GF_SECURITY_ADMIN_PASSWORD, GF_ANALYTICS_REPORTING_ENABLED]
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: DAC_OVERRIDE, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: FSETID, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: FOWNER, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: MKNOD, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: NET_RAW, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: SETGID, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: SETUID, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: SETFCAP, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: SETPCAP, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: KILL, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: /api/health db ok, dashboard write+read-back, backend datasource plugin running"}
   filesystem:
     read_only: true
     tmpfs: []

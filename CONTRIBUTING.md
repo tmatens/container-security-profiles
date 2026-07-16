@@ -37,7 +37,13 @@ trust model in the README. A contribution PR needs:
 3. **A committed workload script** under `profiles/workloads/`, referenced by
    `workload` + `workload_sha256`. The workload must exercise the image's real
    function (a health check alone is not enough) and assert any privilege drop
-   (e.g. PID 1 runs non-root).
+   (e.g. PID 1 runs non-root). **Model it on the image's own upstream tests, not
+   a guess** — read the image's entrypoint (it predicts the privilege-drop shape
+   and which dirs get chowned), the upstream's own test suite (docker-library
+   `official-images` `test/tests/<image>-basics`, or the project's integration
+   tests) for the canonical round-trip, and `docker inspect` + a quick run for
+   the User/ports/write paths. A hand-guessed workload is the top cause of a
+   wrong minimum. (csd's `testdata/drop-test/README.md` has the full method.)
 4. **A criteria doc** at `criteria/<registry>/<org>/<image>.md` mirroring the
    catalog path: what the workload covers, what it doesn't, and the pass
    criteria — including the honest scope limits.

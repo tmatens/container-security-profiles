@@ -148,6 +148,12 @@ def load_profiles():
     return profiles
 
 
+# The two dimensions every profile aspires to cover. A profile missing one has
+# simply not had it derived yet — render that absence explicitly ("not yet
+# derived") so it can't be read as "not applicable" or "infeasible".
+CORE_DIMENSIONS = ("capabilities", "filesystem")
+
+
 def dim_summary(name, dim):
     if name == "capabilities":
         add = dim.get("cap_add") or []
@@ -347,6 +353,13 @@ def render_profile_page(profile, generated, commit, freshness):
             body.append(f"<details><summary>Workload script (<code>{esc(workload)}</code>)"
                         f"</summary><pre><code>{esc(wpath.read_text())}</code></pre></details>")
 
+    for name in CORE_DIMENSIONS:
+        if name not in (data.get("dimensions") or {}):
+            body.append(f"<h2>Dimension: {esc(name)}</h2>")
+            body.append('<p class="muted">Not yet derived — this dimension has not '
+                        "been drop-tested for this image. Absence means not tested, "
+                        "not that a minimum here is infeasible.</p>")
+
     body.append(render_app_tier(data.get("app_tier_verified")))
 
     body.append("<h2>Evidence &amp; provenance</h2><ul>")
@@ -409,6 +422,9 @@ def render_index(profiles, generated, commit, freshness):
                 f"{confidence_badge(deriv.get('confidence'))}</div>")
             if deriv.get("validated_date"):
                 dates.append(str(deriv["validated_date"]))
+        for name in CORE_DIMENSIONS:
+            if name not in (data.get("dimensions") or {}):
+                dim_lines.append(f'<div class="muted">{esc(name)} — not yet derived</div>')
         rows.append(
             "<tr>"
             f'<td><a href="{esc(href)}"><code>{esc(data["image"])}</code></a></td>'

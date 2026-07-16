@@ -57,20 +57,26 @@ is exempt from the observation-window floor (ADR-017 §8).
 - **Verified minimum:** `cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]`
   (drop `SYS_ADMIN` only from the 5-cap grant). Matches the live deploy.
 
-### Coverage caveat — SYS_ADMIN and per-container network monitoring
-This minimum is derived for **host and per-process monitoring** — what the
-representative workload exercises. It does **not** cover netdata's
-**per-container network-interface** metrics. Those are collected by the
-`cgroup-network` helper, which enters each container's network namespace via
-`setns(CLONE_NEWNET)` to enumerate its interfaces — and `setns` into a network
-namespace **requires `CAP_SYS_ADMIN`**. Verified directly under this profile's
-cap set: without `SYS_ADMIN`, entering a running container's netns fails
-`Operation not permitted`; with it, the interfaces enumerate. So a deployment
-that relies on per-container network charts must **add `SYS_ADMIN`** back.
+### Note — SYS_ADMIN, per-container network monitoring, and the setns fallback
+`SYS_ADMIN` is genuinely removable, **including for per-container
+network-interface metrics** — verified on the live deployment (this exact cap
+set, no `SYS_ADMIN`): the per-container network charts (e.g.
+`cgroup_<svc>.net_packets_veth…`) are present and collecting **live, non-zero
+data**.
 
-This is a deliberate scope boundary, not a silent gap: `SYS_ADMIN` is a broad,
-escape-prone capability, and host + per-process monitoring — the common case — is
-genuinely `SYS_ADMIN`-free. But the honest statement is "removable *for this
-feature set*," not "removable." (Caught by adversarial re-derivation: the original
-workload asserted per-process metrics only, so the `setns` path was never
-exercised.)
+The subtlety that makes this true is worth recording, because it is easy to get
+wrong. netdata's `cgroup-network` helper *prefers* to enter each container's
+network namespace via `setns(CLONE_NEWNET)`, which **does** require
+`CAP_SYS_ADMIN` — and under this profile's cap set that call fails once at
+startup (`Cannot switch to network namespace of pid …: Operation not permitted`).
+But that failure is **non-fatal**: netdata falls back to a **host-side** method
+(matching the container's host-side `veth` peer) that needs no privilege, and the
+per-container network charts collect normally through it. The only observable
+effect of dropping `SYS_ADMIN` is cosmetic — interfaces are labelled by their
+host `veth` name rather than the in-container `eth0` — not a loss of data.
+
+Methodology note: an isolated test showed `setns` into a container netns needs
+`SYS_ADMIN`, which is true at the *syscall* level — but the *feature* does not,
+because the software degrades gracefully. Testing the mechanism is not the same
+as testing the feature; the live deployment is the authority, and it confirms the
+original `SYS_ADMIN`-removable derivation.

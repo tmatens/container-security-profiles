@@ -25,9 +25,12 @@ JAX-RS + persistence stack. Curl sidecar; capture-then-match.
 - **Invocation:** `start-dev` (dev H2 store), `KC_BOOTSTRAP_ADMIN_*` env,
   `no-new-privileges`. This is the dev/eval invocation.
 - **The production variation** — `start` against an external **postgres** —
-  is a documented follow-up. Its DB access is a **TCP client** (no
-  capability), and keycloak still runs as USER 1000 on :8080, so the minimum
-  is **expected to stay []**; not yet independently derived here.
+  was independently derived in-stack on 2026-07-16 (csd spec
+  `keycloak-postgres-caps.yaml`, against the cataloged `postgres:16`) and
+  **also yields `[]`**: keycloak still runs as USER 1000 on :8080 and reaches
+  the DB as a plain TCP client, so no capability is load-bearing under the
+  production backend either. The minimum is invocation-independent across the
+  H2-dev and postgres-prod backends — this profile's `[]` applies to both.
 - **Out of band:** Docker's default seccomp baseline; amd64. The minimum
   covers token issuance + realm/admin API writes; clustering (Infinispan/JGroups),
   TLS with a low-port bind, and custom providers are out of scope.

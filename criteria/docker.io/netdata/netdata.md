@@ -80,3 +80,22 @@ Methodology note: an isolated test showed `setns` into a container netns needs
 because the software degrades gracefully. Testing the mechanism is not the same
 as testing the feature; the live deployment is the authority, and it confirms the
 original `SYS_ADMIN`-removable derivation.
+
+## cap_add_validation — exploratory (observation-blocked)
+
+An attempted CL-0011 validation of the official `cap_add: [SYS_PTRACE,
+SYS_ADMIN]` grant lives at `catalog/exploratory/docker.io/netdata/netdata.yaml`
+— **exploratory, probably permanently**: netdata is intrinsically hostile to
+capability observation. apps.plugin trips a `SYS_PTRACE` `cap_capable` per
+`/proc/<pid>` read of every host process every second (~44k held events/30s),
+so the perf-buffer drop rate stays ≥1% on any host (1.9% over 310s on a
+16-core desktop with in-gadget container filtering, csd#407; ~4% on the quiet
+runner VM) and the validated contract cannot clear.
+
+What the observation did establish: **both granted caps are exercised** when
+present — netdata probes `SYS_ADMIN`-gated operations opportunistically and
+degrades gracefully without them. "Exercised" is not "required": the
+drop-test above is authoritative for the minimum and proves `SYS_ADMIN`
+droppable (the `setns` note above records the concrete mechanism: the
+privileged path is preferred, fails once, and a host-side fallback carries
+the feature). Where the two observers diverge, drop-test wins.

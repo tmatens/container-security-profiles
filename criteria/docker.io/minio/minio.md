@@ -24,6 +24,15 @@ anywhere except the object store itself.
 - **Pass criteria:** the S3 round-trip returns the exact payload with every
   candidate dropped.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** minio's only writes are to its object store
+  `/data`, a **persistent VOLUME** (never tmpfs — objects must survive restarts).
+  Under `--read-only` with `/data` a writable volume it serves the S3
+  make-bucket + put + get round-trip with no additional tmpfs; `/tmp` was
+  drop-tested and comes out **not required**.
+- **Pass criteria:** the S3 round-trip passes under `read_only:true` (with `/data`
+  a writable volume) and no rootfs tmpfs.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): `server /data`, root credentials
   via env, a docker-managed data volume, `no-new-privileges` (no file-cap

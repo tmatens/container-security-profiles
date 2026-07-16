@@ -25,6 +25,13 @@ check also asserts the serving process is non-root.
 - **Pass criteria:** `STORED` + exact value read-back + non-root uid, with
   every candidate dropped.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [].** memcached is an in-memory store and writes
+  nothing to disk. Under `--read-only` with no tmpfs it serves the set/get
+  round-trip correctly; `/tmp` was drop-tested and comes out **not required**.
+- **Pass criteria:** the set/get round-trip passes under `read_only:true` with no
+  tmpfs at all.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the image default — USER
   memcache, default command (64 MB cache), no mounts, `no-new-privileges`.

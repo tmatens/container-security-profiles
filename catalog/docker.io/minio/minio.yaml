@@ -5,9 +5,11 @@
 # writing only to its /data VOLUME; the whole Docker default set is
 # over-grant, residual risk = the root uid, harden further with user:).
 # Immutable RELEASE.* tag. See criteria/docker.io/minio/minio.md.
+# filesystem: read_only:true, tmpfs:[]. minio's only writes are to its object
+# store /data (a persistent VOLUME, not tmpfs); it runs correctly under a
+# read-only rootfs with no additional tmpfs. /tmp was drop-tested and is NOT
+# required. Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: docker.io/minio/minio
 applies_to:
@@ -58,3 +60,34 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: S3 mb/put/get round-trip ok"}
           - {removed: KILL, required: false, observed: "correct: S3 mb/put/get round-trip ok"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: S3 mb/put/get round-trip ok"}
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+      validated_date: "2026-07-16"
+      duration_seconds: 3
+      confidence: high
+      workload: profiles/workloads/minio.sh
+      workload_sha256: "1e722eac496a234dd1f454b222c25aa486ca57ec995d7f7aa0c7cebf6e897e1b"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: [server, /data]
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [MINIO_ROOT_USER, MINIO_ROOT_PASSWORD]
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: S3 mb/put/get round-trip ok"}

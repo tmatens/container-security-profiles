@@ -5,9 +5,10 @@
 # :11211, and persists nothing. All 14 Docker defaults derived removable with
 # the full set/get round-trip passing. See
 # criteria/docker.io/library/memcached.md.
+# filesystem: read_only:true, tmpfs:[]. memcached is an in-memory store and
+# writes nothing to disk — it runs correctly under a read-only rootfs with no
+# tmpfs. /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: docker.io/library/memcached
 applies_to:
@@ -58,3 +59,34 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: set/get round-trip ok, memcached uid=11211 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: set/get round-trip ok, memcached uid=11211 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: set/get round-trip ok, memcached uid=11211 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: []
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/memcached@sha256:dc561d52bb8ad3c038867123ed2dc8357c4c128f047cdbd526cd65cf39408cbd
+      validated_date: "2026-07-16"
+      duration_seconds: 2
+      confidence: high
+      workload: profiles/workloads/memcached.sh
+      workload_sha256: "eb6de722616516fe8a863186e2ffca194309fb65412f12fefc7f5938aa12ef19"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /tmp, required: false, observed: "correct: set/get round-trip ok, memcached uid=11211 (non-root)"}

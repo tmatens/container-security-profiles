@@ -15,9 +15,11 @@
 # silently removing the privilege separation. The workload's non-root worker
 # uid assert is mandatory for any re-derivation.
 # See criteria/docker.io/library/httpd.md.
+# filesystem: read_only:true, tmpfs:[/usr/local/apache2/logs]. httpd writes its
+# pid + logs there at startup and fails to start under a read-only rootfs without
+# it (AH00099: could not create httpd.pid); /tmp was drop-tested and is NOT
+# required. Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.4"
 image: docker.io/library/httpd
 applies_to:
@@ -69,3 +71,35 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/usr/local/apache2/logs]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/httpd@sha256:305fd8326a27a137fedb8900f26375699ab233cc37793f35cf5d7c65671fb252
+      validated_date: "2026-07-16"
+      duration_seconds: 5
+      confidence: high
+      workload: profiles/workloads/httpd.sh
+      workload_sha256: "94d1ea3488804864d96ef091f91cb619b2bc01975952b504549071c56d55aa42"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: /usr/local/apache2/logs, required: true, observed: "container failed to start: [Thu Jul 16 17:32:57.795602 2026] [core:error] [pid 1:tid 1] AH00100: httpd: could not log pid to file /usr/local/apache2/logs/httpd.pid"}
+          - {removed: /tmp, required: false, observed: "correct: default page served, worker uid=33 (non-root)"}

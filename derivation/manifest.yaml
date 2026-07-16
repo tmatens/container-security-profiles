@@ -300,3 +300,29 @@ images:
       variant deliberately out of scope (the socket is the risk, csd#110).
       Dynamic config docker-cp'd into /tmp + directory watch. Spec: csd
       testdata/drop-test/traefik-caps.yaml.
+
+  - profile: catalog/docker.io/library/httpd.yaml
+    image: docker.io/library/httpd
+    tag: "2.4"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/httpd.sh
+    note: >-
+      cap_add:[NET_BIND_SERVICE, SETGID, SETUID] — master/worker shape: root
+      master, www-data workers. SHARP EDGE PROVEN: SETGID dropped -> httpd
+      KEEPS SERVING with ROOT workers; only the worker uid assert catches it
+      (content-only check false-passes). NET_BIND_SERVICE scoped to the pinned
+      ip_unprivileged_port_start=1024 posture. Spec: csd
+      testdata/drop-test/httpd-caps.yaml.
+
+  - profile: catalog/docker.io/library/memcached.yaml
+    image: docker.io/library/memcached
+    tag: "1.6"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/memcached.sh
+    note: >-
+      ZERO-CAP: USER memcache (11211) from the first instruction, unprivileged
+      port, no persistence. Round-trip over in-image bash /dev/tcp (no client
+      tool ships); exec inherits USER memcache so no probe pollution. Spec:
+      csd testdata/drop-test/memcached-caps.yaml.

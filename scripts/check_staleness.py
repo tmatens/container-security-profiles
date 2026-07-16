@@ -9,8 +9,9 @@ republished the tag: the profile was derived against a now-superseded artifact
 and should be re-derived on the BPF runner.
 
 Pure stdlib + public-registry anonymous auth — no docker, no secret, runs on any
-runner. Docker Hub (``docker.io``) images are supported; other registries are
-reported as unchecked rather than failing.
+runner. Any registry speaking the OCI distribution API with an anonymous-pull
+Bearer challenge is supported (docker.io, ghcr.io, codeberg.org, ...); an image
+whose registry cannot be resolved is reported as unchecked rather than failing.
 
     python scripts/check_staleness.py --catalog-dir catalog
     python scripts/check_staleness.py --catalog-dir catalog --json freshness.json
@@ -26,7 +27,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,28 +47,53 @@ _ACCEPT = ", ".join(
 )
 
 
-def _dockerhub_repo(image: str) -> str | None:
-    """Return the Docker Hub repository path for a normalized image ref, or None
-    if it is not a docker.io image (other registries are not queried here)."""
-    if image.startswith("docker.io/"):
-        return image[len("docker.io/") :]
-    return None
+def _registry_repo(image: str) -> tuple[str, str] | None:
+    """Split a normalized image ref into (registry API host, repository path),
+    or None when there is no registry-qualified prefix to query.
+
+    Catalog images are registry-qualified by contract (``docker.io/library/redis``,
+    ``ghcr.io/owner/repo``). Docker Hub's API host differs from its image prefix."""
+    host, _, repo = image.partition("/")
+    if "." not in host or not repo:
+        return None
+    if host == "docker.io":
+        host = "registry-1.docker.io"
+    return host, repo
 
 
-def current_digest(repo: str, tag: str) -> str:
-    """Current manifest-list digest of docker.io ``repo:tag`` (anonymous pull)."""
-    token_url = (
-        "https://auth.docker.io/token?service=registry.docker.io"
-        f"&scope=repository:{repo}:pull"
-    )
-    token = json.load(urllib.request.urlopen(token_url, timeout=20))["token"]
-    req = urllib.request.Request(
-        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", method="HEAD"
-    )
-    req.add_header("Authorization", f"Bearer {token}")
+def _manifest_head(url: str, token: str | None) -> str:
+    req = urllib.request.Request(url, method="HEAD")
     req.add_header("Accept", _ACCEPT)
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, timeout=20) as resp:
         return resp.headers.get("Docker-Content-Digest", "")
+
+
+def current_digest(host: str, repo: str, tag: str) -> str:
+    """Current manifest-list digest of ``host/repo:tag`` via anonymous pull.
+
+    Standard OCI distribution flow: HEAD the manifest; on 401, follow the
+    ``WWW-Authenticate`` Bearer challenge to the registry's token endpoint for an
+    anonymous pull token and retry. Works for docker.io, ghcr.io, codeberg.org."""
+    url = f"https://{host}/v2/{repo}/manifests/{tag}"
+    try:
+        return _manifest_head(url, None)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 401:
+            raise
+        challenge = dict(
+            re.findall(r'(\w+)="([^"]*)"', exc.headers.get("WWW-Authenticate", ""))
+        )
+        realm = challenge.get("realm", "")
+        if not realm.startswith("https://"):
+            raise
+        params = {"scope": f"repository:{repo}:pull"}
+        if challenge.get("service"):
+            params["service"] = challenge["service"]
+        token_url = f"{realm}?{urllib.parse.urlencode(params)}"
+        token = json.load(urllib.request.urlopen(token_url, timeout=20))["token"]
+        return _manifest_head(url, token)
 
 
 def _concrete_tag(doc: dict) -> str | None:
@@ -92,13 +121,13 @@ def check(catalog_dir: Path, json_path: Path | None = None) -> int:
         if not isinstance(doc, dict):
             continue
         image = doc.get("image", "")
-        repo = _dockerhub_repo(image)
+        registry = _registry_repo(image)
         tag = _concrete_tag(doc)
         entry = {"image": image, "tag": tag}
-        if repo is None:
-            print(f"SKIP {label}: {image} is not a docker.io image (not checked)")
+        if registry is None:
+            print(f"SKIP {label}: {image} has no registry-qualified prefix (not checked)")
             results[label] = {**entry, "status": "unchecked",
-                              "reason": "registry not queried (only docker.io is checked)"}
+                              "reason": "image is not registry-qualified"}
             continue
         if tag is None:
             print(f"SKIP {label}: no concrete applies_to.tags to check against")
@@ -106,7 +135,7 @@ def check(catalog_dir: Path, json_path: Path | None = None) -> int:
                               "reason": "no concrete applies_to.tags to check against"}
             continue
         try:
-            current = current_digest(repo, tag)
+            current = current_digest(*registry, tag)
         except Exception as exc:  # network / auth / not-found
             print(f"WARN {label}: could not resolve {image}:{tag}: {exc}")
             results[label] = {**entry, "status": "unchecked",

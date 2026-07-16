@@ -45,10 +45,10 @@ services:
 | `docker.io/library/mongo` | `8.0` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/tmp]` | high |
 | `quay.io/keycloak/keycloak` | `26.4` | `capabilities: cap_drop: [ALL] (zero-cap, non-root)` | high |
 | `docker.io/library/mysql` | `8.4` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/tmp, /var/run/mysqld]` | high |
-| `docker.io/library/nextcloud` | `32` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
+| `docker.io/library/nextcloud` | `32` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true, tmpfs: [/var/run/apache2]` | high |
 | `docker.io/library/postgres` | `16` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run/postgresql]` | high |
 | `docker.io/library/traefik` | `v3.7` | `capabilities: cap_add: [NET_BIND_SERVICE] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | high |
-| `docker.io/library/wordpress` | `6.9` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` | high |
+| `docker.io/library/wordpress` | `6.9` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true, tmpfs: [/var/run/apache2]` | high |
 | `docker.io/library/rabbitmq` | `4.3` | `capabilities: cap_add: [SETGID, SETUID]` | high |
 | `docker.io/syncthing/syncthing` | `2.0` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/library/redis` | `8.2.7` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
@@ -58,7 +58,7 @@ services:
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |
 | `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` · `filesystem: read_only: true, tmpfs: [/run:exec]` | high |
-| `ghcr.io/paperless-ngx/paperless-ngx` | `2.18` | `capabilities: cap_add: [CHOWN, SETGID, SETUID]` | high |
+| `ghcr.io/paperless-ngx/paperless-ngx` | `2.18` | `capabilities: cap_add: [CHOWN, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run:exec, /tmp]` | high |
 | `ghcr.io/immich-app/postgres` | `14-vectorchord…` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/etc/postgresql, /var/run/postgresql]` | high · app-tier ✓ |
 
 All capability profiles are `cap_drop: [ALL]` plus the listed `cap_add`.

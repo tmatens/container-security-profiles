@@ -29,6 +29,17 @@ runs as the non-root PUID (uid 1000).
 - **Pass criteria:** the document is consumed through the full pipeline
   **and** a worker is uid 1000; each granted cap's drop fatals s6 init.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/run:exec, /tmp].** paperless stores its
+  `data`/`media`/`consume`/`export` under declared VOLUMEs (persistent). Under
+  `--read-only` its **s6-overlay** supervisor needs `/run` writable **and
+  executable** (it writes then `exec`s `/run/s6/.../init`, so a default noexec
+  tmpfs fails `Permission denied` — hence `/run:exec`), plus `/tmp` scratch. Both
+  drop-test **required**.
+- **Pass criteria:** the app serves and the admin API responds under
+  `read_only:true` with `tmpfs:[/run:exec, /tmp]` (the data VOLUMEs writable, the
+  redis broker up).
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the default — root s6 start,
   `PAPERLESS_REDIS` + `PAPERLESS_SECRET_KEY` + `PAPERLESS_ADMIN_*` env, fresh

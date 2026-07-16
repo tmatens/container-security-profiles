@@ -21,9 +21,12 @@
 # mariadb:11.4). Trial lifecycle quirk encoded in the harness: a
 # fresh-docroot container cannot adopt an installed database — see
 # criteria/docker.io/library/nextcloud.md.
+# filesystem: read_only:true, tmpfs:[/var/run/apache2]. nextcloud (Apache+PHP)
+# rsyncs its source + stores config/data in /var/www/html, a declared VOLUME
+# (persistent, never tmpfs). Under a read-only rootfs the only rootfs write is
+# Apache's pid/lock dir /var/run/apache2; /var/log/apache2 and /tmp were
+# drop-tested and are NOT required. Derived by drop-test (in-stack mariadb dep).
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.4"
 image: docker.io/library/nextcloud
 applies_to:
@@ -76,3 +79,36 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: WebDAV PUT/GET round-trip ok, worker uid=33 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: WebDAV PUT/GET round-trip ok, worker uid=33 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: WebDAV PUT/GET round-trip ok, worker uid=33 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/var/run/apache2]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/nextcloud@sha256:90fdc9f99fab6f8dcfb16f6010a2a615775f01ed8e9265fa10beed6b2f10cbae
+      validated_date: "2026-07-16"
+      duration_seconds: 77
+      confidence: high
+      workload: profiles/workloads/nextcloud.sh
+      workload_sha256: "da8d4529fb8f89576cd324840cac3f62ea71e3284bea62d722c68287f3623ba9"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD, NEXTCLOUD_ADMIN_USER, NEXTCLOUD_ADMIN_PASSWORD, NEXTCLOUD_TRUSTED_DOMAINS]
+      drop_test:
+        checks:
+          - {removed: /var/run/apache2, required: true, observed: "container exited during install: AH00558: apache2: Could not reliably determine the server's fully qualified d"}
+          - {removed: /var/log/apache2, required: false, observed: "correct: WebDAV PUT/GET round-trip ok, worker uid=33 (non-root)"}
+          - {removed: /tmp, required: false, observed: "correct: WebDAV PUT/GET round-trip ok, worker uid=33 (non-root)"}

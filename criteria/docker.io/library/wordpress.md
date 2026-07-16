@@ -51,6 +51,16 @@ Every grant carries distinct evidence:
 - **Pass criteria:** titled homepage served from the DB **and** a worker at
   uid 33; each granted cap's drop fails with the evidence above.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/var/run/apache2].** wordpress copies WP core into
+  `/var/www/html` on first run and stores uploads/config there — a declared VOLUME
+  (persistent, never tmpfs). Under `--read-only` the only rootfs write is Apache's
+  pid/lock dir `/var/run/apache2`; `/var/log/apache2` (logs go to stdout) and
+  `/tmp` were drop-tested and come out **not required**.
+- **Pass criteria:** the DB-backed homepage serves and a non-root worker runs under
+  `read_only:true` with `tmpfs:[/var/run/apache2]` (and `/var/www/html` a writable
+  volume, the mysql dep up).
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the default — root start,
   `WORDPRESS_DB_*` env, a docker-managed docroot VOLUME, `no-new-privileges`,

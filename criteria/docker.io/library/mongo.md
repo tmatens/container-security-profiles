@@ -35,6 +35,14 @@ uid assert is mandatory for any re-derivation.
 - **Pass criteria:** the mongosh round-trip returns the inserted document
   **and** `mongod` is uid 999; dropping SETGID or SETUID fails container start.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/tmp].** The data dirs `/data/db` and `/data/configdb`
+  are declared VOLUMEs (persistent). Under `--read-only` mongod additionally
+  requires `/tmp` writable — it creates its unix socket (`/tmp/mongodb-27017.sock`)
+  there (drop-test **required**).
+- **Pass criteria:** the insert/count round-trip passes under `read_only:true` with
+  `tmpfs:[/tmp]` (and the data dirs writable volumes).
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the default — root (no `user:`
   override), docker-managed data volumes, no auth env, `no-new-privileges`.

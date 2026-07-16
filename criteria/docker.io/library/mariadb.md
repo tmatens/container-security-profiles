@@ -36,6 +36,14 @@ still root or mid-init, so the privilege drop must be confirmed. (root@localhost
 - **Pass criteria:** the workload round-trip succeeds **and** `mariadbd` is uid 999;
   dropping SETUID or SETGID breaks the gosu privilege drop and the container exits.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/run/mysqld, /tmp].** The data dir `/var/lib/mysql`
+  is a declared VOLUME (persistent). Under `--read-only` mariadbd requires
+  `/run/mysqld` (its unix socket + pid dir) and `/tmp` (temp files during init /
+  operation) writable — both drop-test **required**.
+- **Pass criteria:** the app-user query round-trip + non-root uid assert pass under
+  `read_only:true` with both tmpfs paths (and `/var/lib/mysql` a writable volume).
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the default — root (no `user:` override),
   a docker-managed datadir volume, `MARIADB_*` env, `no-new-privileges`. Two common

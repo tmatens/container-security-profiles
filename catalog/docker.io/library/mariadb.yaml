@@ -16,9 +16,11 @@
 # still is not). And a deployment that runs `user:` = the mysql uid against a
 # pre-owned datadir skips the gosu drop entirely, shrinking the minimum to [].
 # See criteria/docker.io/library/mariadb.md.
+# filesystem: read_only:true, tmpfs:[/run/mysqld, /tmp]. The data dir
+# /var/lib/mysql is a declared VOLUME (persistent). Under a read-only rootfs
+# mariadbd needs /run/mysqld (unix socket + pid) and /tmp (temp files) writable.
+# Derived by drop-test.
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
 schema_version: "1.3"
 image: docker.io/library/mariadb
 applies_to:
@@ -69,3 +71,35 @@ dimensions:
           - {removed: SYS_CHROOT, required: false, observed: "correct: query round-trip ok, mariadbd uid=999 (non-root)"}
           - {removed: KILL, required: false, observed: "correct: query round-trip ok, mariadbd uid=999 (non-root)"}
           - {removed: AUDIT_WRITE, required: false, observed: "correct: query round-trip ok, mariadbd uid=999 (non-root)"}
+  filesystem:
+    read_only: true
+    tmpfs: [/run/mysqld, /tmp]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/library/mariadb@sha256:a794d9eb009e20de605858a11f32f63b4075cbd197c650436f0e3b457e4caed7
+      validated_date: "2026-07-16"
+      duration_seconds: 43
+      confidence: high
+      workload: profiles/workloads/mariadb.sh
+      workload_sha256: "db93f70a728265fa0e9a798a17b4859ed408200a113782b3b7a284f5d88c65aa"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: []
+        mounts: []
+        env: [MARIADB_ROOT_PASSWORD, MARIADB_DATABASE, MARIADB_USER, MARIADB_PASSWORD]
+      drop_test:
+        checks:
+          - {removed: /run/mysqld, required: true, observed: "container exited: 2026-07-16 20:55:08+00:00 [ERROR] [Entrypoint]: Unable to start server."}
+          - {removed: /tmp, required: true, observed: "container exited: "}

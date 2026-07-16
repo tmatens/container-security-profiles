@@ -41,6 +41,14 @@ drop silently failed, so the uid assert is mandatory for any re-derivation.
 - **Pass criteria:** the app-user round-trip succeeds **and** `mysqld` is uid
   999; dropping any of the three granted caps aborts the container at startup.
 
+## filesystem — derived by drop-test
+- **read_only: true, tmpfs: [/tmp, /var/run/mysqld].** The data dir
+  `/var/lib/mysql` is a declared VOLUME (persistent). Under `--read-only` mysqld
+  requires `/var/run/mysqld` (its unix socket + pid dir) and `/tmp` (temp files)
+  writable — both drop-test **required**.
+- **Pass criteria:** the app-user query round-trip + non-root uid assert pass under
+  `read_only:true` with both tmpfs paths (and `/var/lib/mysql` a writable volume).
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the default — root (no `user:`
   override), a docker-managed datadir volume, `MYSQL_*` env,

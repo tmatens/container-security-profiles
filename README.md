@@ -62,6 +62,9 @@ services:
 | `ghcr.io/immich-app/postgres` | `14-vectorchord…` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` | high · app-tier ✓ |
 
 All capability profiles are `cap_drop: [ALL]` plus the listed `cap_add`.
+A dimension missing from a row (most commonly `filesystem`) has **not yet been
+derived** for that image — absence means not tested, not that the image can't
+run read-only. Each profile's header comment calls this out explicitly.
 The **[browsable catalog site](https://tmatens.github.io/container-security-profiles/)**
 renders every profile with its copy-paste snippet, drop-test evidence table,
 recorded invocation, and criteria — or read the YAML directly under

@@ -6,6 +6,9 @@
 # bare dashboard GET serves even without the cache, so the requirement only shows
 # under image optimization; the drop-test correctness check exercises it. /tmp was
 # drop-tested and is NOT required.
+#
+# capabilities: not yet derived. Absence means not tested for this image —
+# not that the Docker default capability set is needed.
 schema_version: "1.2"
 image: ghcr.io/gethomepage/homepage
 applies_to:

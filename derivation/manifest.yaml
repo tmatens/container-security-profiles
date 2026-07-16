@@ -326,3 +326,28 @@ images:
       port, no persistence. Round-trip over in-image bash /dev/tcp (no client
       tool ships); exec inherits USER memcache so no probe pollution. Spec:
       csd testdata/drop-test/memcached-caps.yaml.
+
+  - profile: catalog/docker.io/library/eclipse-mosquitto.yaml
+    image: docker.io/library/eclipse-mosquitto
+    tag: "2.0"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/mosquitto.sh
+    note: >-
+      cap_add:[SETGID, SETUID] — the broker's own IN-PROCESS drop (third
+      shape: not gosu, not master/worker); refuses to start with either
+      dropped. Unprivileged :1883 = no NET_BIND_SERVICE. Probe hygiene: exec
+      as --user mosquitto AND write nothing in-container (a /tmp capture
+      would false-require the fs candidate). Spec: csd
+      testdata/drop-test/mosquitto-caps.yaml.
+
+  - profile: catalog/docker.io/library/eclipse-mosquitto.yaml
+    image: docker.io/library/eclipse-mosquitto
+    tag: "2.0"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/mosquitto.sh
+    note: >-
+      read_only:true, tmpfs:[] — data/log are declared VOLUMEs (persistent,
+      never tmpfs); /tmp not required. Spec: csd
+      testdata/drop-test/mosquitto-fs.yaml.

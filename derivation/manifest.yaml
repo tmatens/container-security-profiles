@@ -214,3 +214,19 @@ images:
       documented over-grant note in the profile); immich's tmpfs invocation
       (CHOWN needed) is deploy-check's scope (csd deploy-check/manifest.yaml),
       never this entry's. Spec: csd testdata/drop-test/valkey-caps.yaml.
+
+  - profile: catalog/docker.io/library/mysql.yaml
+    image: docker.io/library/mysql
+    tag: "8.4"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/mysql.sh
+    note: >-
+      cap_add:[DAC_OVERRIDE, SETGID, SETUID] — all startup caps. SETGID/SETUID =
+      the gosu root->mysql re-exec (mariadb shape). DAC_OVERRIDE is the mysql
+      divergence: the ROOT-phase entrypoint `find` must traverse
+      /var/lib/mysql-files (mysql-owned 750) and root without DAC_OVERRIDE fails
+      normal DAC checks there. No CHOWN on docker-managed volumes (datadir ships
+      mysql-owned 1777); a foreign-owned bind re-introduces it. Correctness MUST
+      keep the non-root uid assert (redis/mariadb sharp edge). Spec: csd
+      testdata/drop-test/mysql-caps.yaml.

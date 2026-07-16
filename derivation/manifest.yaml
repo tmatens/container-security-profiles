@@ -386,3 +386,28 @@ images:
       re-runs under the trial's cap posture. :80 under the pinned
       ip_unprivileged_port_start=1024. Spec: csd
       testdata/drop-test/nextcloud-caps.yaml.
+
+  - profile: catalog/docker.io/jellyfin/jellyfin.yaml
+    image: docker.io/jellyfin/jellyfin
+    tag: "10.11"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/jellyfin.sh
+    note: >-
+      ZERO-CAP while running AS ROOT (the instructive contrast to
+      prometheus/memcached's non-root-by-construction): unprivileged :8096,
+      writes only to /config+/cache VOLUMEs — the whole Docker default set is
+      over-grant; residual risk = the root uid (harden further with user:).
+      GPU/transcode = devices dimension, out of scope (csd#266 class).
+      Workload = real wizard REST + token auth + authorized System/Info.
+      Spec: csd testdata/drop-test/jellyfin-caps.yaml.
+
+  - profile: catalog/docker.io/jellyfin/jellyfin.yaml
+    image: docker.io/jellyfin/jellyfin
+    tag: "10.11"
+    dimension: filesystem
+    method: drop-test
+    workload: profiles/workloads/jellyfin.sh
+    note: >-
+      read_only:true, tmpfs:[] — NOT EVEN /tmp; all writes land in the
+      /config+/cache VOLUMEs. Spec: csd testdata/drop-test/jellyfin-fs.yaml.

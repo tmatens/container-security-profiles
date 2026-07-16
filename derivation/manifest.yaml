@@ -478,3 +478,27 @@ images:
       written by the command to /tmp (no default config ships; committed
       specs cannot carry bind mounts). Spec: csd
       testdata/drop-test/haproxy-caps.yaml.
+
+  - profile: catalog/docker.io/syncthing/syncthing.yaml
+    image: docker.io/syncthing/syncthing
+    tag: "2.0"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/syncthing.sh
+    note: >-
+      cap_add:[CHOWN, DAC_OVERRIDE, SETGID, SETUID] — root entrypoint chowns
+      /var/syncthing then su-execs to PUID 1000; unprivileged ports. user: +
+      pre-owned state = []. Spec: csd testdata/drop-test/syncthing-caps.yaml.
+
+  - profile: catalog/docker.io/louislam/uptime-kuma.yaml
+    image: docker.io/louislam/uptime-kuma
+    tag: "2"
+    dimension: capabilities
+    method: drop-test
+    workload: profiles/workloads/uptime-kuma.sh
+    note: >-
+      cap_add:[DAC_OVERRIDE, FOWNER] — root node writing sqlite+config under
+      /app/data; unprivileged :3001, no drop. MODERATE confidence: admin/
+      monitor CRUD is socket.io-only (no REST for a curl probe), so ping
+      monitors' NET_RAW is UNMEASURED and excluded (documented). Spec: csd
+      testdata/drop-test/uptime-kuma-caps.yaml.

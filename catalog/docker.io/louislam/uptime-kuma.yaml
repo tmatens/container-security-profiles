@@ -1,0 +1,64 @@
+# uptime-kuma — minimum Linux capabilities, derived by drop-test against the
+# default v2 invocation (embedded sqlite via the REST setup call). Trims
+# 14 -> 2: cap_add:[DAC_OVERRIDE, FOWNER]. node runs as root and writes its
+# sqlite DB + config under /app/data on a fresh rootfs — DAC_OVERRIDE to
+# create/write the data tree, FOWNER for permission fixups on files it does
+# not own by mode. Unprivileged :3001 (no NET_BIND_SERVICE), no privilege
+# drop.
+#
+# CONFIDENCE moderate — a documented workload-coverage limit: uptime-kuma's
+# admin creation and monitor CRUD are socket.io-only (no REST surface a
+# drop-test curl probe can drive), so the derivation exercises boot + sqlite
+# setup + self-restart + the serving/auth stack but NOT a running monitor.
+# PING-type monitors use raw ICMP sockets and would add NET_RAW — a grant
+# this scope cannot measure. See criteria/docker.io/louislam/uptime-kuma.md.
+schema_version: "1.3"
+image: docker.io/louislam/uptime-kuma
+applies_to:
+  tags: ["2"]
+status: validated
+dimensions:
+  capabilities:
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE, FOWNER]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/louislam/uptime-kuma@sha256:91e963bfda569ba115206e843febb446f473ab525add4e08b2b9e3beffa16985
+      validated_date: "2026-07-16"
+      duration_seconds: 300
+      confidence: moderate
+      workload: profiles/workloads/uptime-kuma.sh
+      workload_sha256: "6f0115cf9076fda49a1325e2c1581b29b95c20d302960b8a68690888f1d5518e"
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: ""
+        pid: ""
+        devices: []
+        security_opt: ["no-new-privileges:true"]
+        mounts: []
+        env: []
+      drop_test:
+        checks:
+          - {removed: CHOWN, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: DAC_OVERRIDE, required: true, observed: "container exited: 2026-07-16T04:01:49Z [] INFO: Cannot write to error.log"}
+          - {removed: FSETID, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: FOWNER, required: true, observed: "container exited: 2026-07-16T04:02:03Z [SERVER] ERROR: Failed to prepare your database: EPERM: operation not p"}
+          - {removed: MKNOD, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: NET_RAW, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: SETGID, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: SETUID, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: SETFCAP, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: SETPCAP, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: NET_BIND_SERVICE, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: SYS_CHROOT, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: KILL, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}
+          - {removed: AUDIT_WRITE, required: false, observed: "correct: sqlite setup + self-restart + serving, auth layer up"}

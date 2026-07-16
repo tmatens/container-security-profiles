@@ -354,7 +354,10 @@ def render_profile_page(profile, generated, commit, freshness):
         body.append(f'<li><a href="{root}criteria/{esc(rel.with_suffix(".html"))}">'
                     "Validation criteria</a> — per-image scenarios and pass criteria</li>")
     body.append(f'<li><a href="{REPO_URL}/blob/main/catalog/{esc(rel)}">Profile source</a>'
-                " in the repository</li></ul>")
+                " in the repository</li>")
+    body.append(f'<li><a href="{REPO_URL}/commits/main/catalog/{esc(rel)}">Version history</a>'
+                " — every previously published pin, with the full profile as validated"
+                " against it</li></ul>")
     body.append(f'<details><summary>Raw profile YAML</summary>'
                 f"<pre><code>{esc(profile['raw'])}</code></pre></details>")
     body.append(f"<script>{COPY_JS}</script>")

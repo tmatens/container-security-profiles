@@ -28,7 +28,7 @@ services:
 | Image | Tags | Minimum (all dimensions apply as a unit) | Confidence |
 |---|---|---|---|
 | `codeberg.org/forgejo/forgejo` | `15` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETGID, SETUID, SYS_CHROOT] (NET_BIND_SERVICE under ip_unprivileged_port_start=1024)` | high |
-| `docker.io/grafana/alloy` | `v1.16.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
+| `docker.io/grafana/alloy` | `v1.16.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | moderate (caps — collectors) |
 | `docker.io/grafana/grafana` | `13.0.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high (caps) · moderate (fs) |
 | `docker.io/grafana/loki` | `3.7.2` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/jellyfin/jellyfin` | `10.11` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` · `devices: [/dev/dri] (hw transcode)` | high (caps/fs) · moderate (devices) |
@@ -38,9 +38,9 @@ services:
 | `docker.io/library/httpd` | `2.4` | `capabilities: cap_add: [NET_BIND_SERVICE, SETGID, SETUID] (under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true, tmpfs: [/usr/local/apache2/logs]` | high |
 | `docker.io/library/eclipse-mosquitto` | `2.0` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/library/mariadb` | `11.4` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run/mysqld, /tmp]` | high |
-| `docker.io/adguard/adguardhome` | `v0.107.78` | `capabilities: cap_add: [DAC_OVERRIDE, NET_BIND_SERVICE] (DNS-only, under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | high |
+| `docker.io/adguard/adguardhome` | `v0.107.78` | `capabilities: cap_add: [DAC_OVERRIDE, NET_BIND_SERVICE] (DNS-only, under ip_unprivileged_port_start=1024)` · `filesystem: read_only: true` | moderate (caps — DHCP=NET_ADMIN) |
 | `docker.io/library/memcached` | `1.6` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
-| `docker.io/louislam/uptime-kuma` | `2` | `capabilities: cap_add: [DAC_OVERRIDE, FOWNER]` (ping monitors add `NET_RAW`) · `filesystem: read_only: true, tmpfs: [/tmp]` | high |
+| `docker.io/louislam/uptime-kuma` | `2` | `capabilities: cap_add: [DAC_OVERRIDE, FOWNER]` (ping monitors add `NET_RAW`) · `filesystem: read_only: true, tmpfs: [/tmp]` | moderate (caps — ping=NET_RAW) |
 | `docker.io/minio/minio` | `RELEASE.2025-09-07…` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/library/mongo` | `8.0` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/tmp]` | high |
 | `quay.io/keycloak/keycloak` | `26.4` | `capabilities: cap_drop: [ALL] (zero-cap, non-root)` | high |
@@ -53,15 +53,21 @@ services:
 | `docker.io/syncthing/syncthing` | `2.0` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/library/redis` | `8.2.7` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/prom/prometheus` | `v3.13.1` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
-| `docker.io/pihole/pihole` | `2026.07.2` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETFCAP, SETGID, SETUID] (DNS-only; NO no-new-privileges — see criteria)` · `filesystem: read_only: false (infeasible — see criteria)` | high |
-| `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | high |
+| `docker.io/pihole/pihole` | `2026.07.2` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETFCAP, SETGID, SETUID] (DNS-only; NO no-new-privileges — see criteria)` · `filesystem: read_only: false (infeasible — see criteria)` | moderate (caps) · high (fs) |
+| `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | moderate (caps — see coverage) |
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |
-| `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` · `filesystem: read_only: true, tmpfs: [/run:exec]` | high |
+| `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` · `filesystem: read_only: true, tmpfs: [/run:exec]` | moderate (caps — base install) |
 | `ghcr.io/paperless-ngx/paperless-ngx` | `2.18` | `capabilities: cap_add: [CHOWN, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/run:exec, /tmp]` | high |
 | `ghcr.io/immich-app/postgres` | `14-vectorchord…` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]` · `filesystem: read_only: true, tmpfs: [/etc/postgresql, /var/run/postgresql]` | high · app-tier ✓ |
 
 All capability profiles are `cap_drop: [ALL]` plus the listed `cap_add`.
+**Confidence** is `high` only where a single workload provably bounds the
+image's *privilege* surface; a dimension is `moderate` when an unexercised
+optional feature could need more privilege than the derived minimum (e.g.
+Pi-hole's DHCP → `NET_ADMIN`, uptime-kuma's ping monitors → `NET_RAW`, netdata's
+container-network collector → `SYS_ADMIN`) — the criteria doc names what's
+uncovered. The model is [compose-lint ADR-018](https://github.com/tmatens/compose-lint/blob/main/docs/adr/018-confidence-as-multi-axis.md).
 A dimension missing from a row (most commonly `filesystem`) has **not yet been
 derived** for that image — absence means not tested, not that the image can't
 run read-only. Each profile's header comment calls this out explicitly.

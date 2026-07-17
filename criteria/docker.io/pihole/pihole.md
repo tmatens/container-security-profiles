@@ -67,6 +67,14 @@ Two hard consequences, both measured:
   pihole that relocated these writes to a data dir could be re-derived.
 - **Pass criteria:** none — `read_only: true` is infeasible for this image.
 
+## Coverage & confidence (moderate)
+Per ADR-018, the capabilities dimension is `moderate` — the workload is DNS-only,
+and Pi-hole documents conditional caps for optional features the workload does not
+drive: **DHCP** (`NET_ADMIN`), **NTP client** (`SYS_TIME`), and `SYS_NICE`. None is
+in the DNS-only minimum, so `coverage: partial`. (The filesystem dimension's
+`read_only: false` is a robust negative and stays `high` — it holds regardless of
+which optional features are enabled.)
+
 ## Scope (`run_config` + out-of-band conditions)
 - **DNS-only.** DHCP mode requires NET_ADMIN and raw sockets — out of scope
   by design (the queue's boundary).

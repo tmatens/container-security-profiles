@@ -99,3 +99,15 @@ drop-test above is authoritative for the minimum and proves `SYS_ADMIN`
 droppable (the `setns` note above records the concrete mechanism: the
 privileged path is preferred, fails once, and a host-side fallback carries
 the feature). Where the two observers diverge, drop-test wins.
+
+## Coverage & confidence (moderate)
+Per ADR-018, the capabilities dimension is **`moderate`**, not `high` — netdata's
+collector surface is large and a single workload cannot bound it. The two
+`SYS_ADMIN` paths that *could* raise the minimum are both accounted for (the image
+ships no `ebpf.plugin`; per-container network works via a host-side fallback,
+verified live above), but other collectors were not exhaustively driven, so
+`coverage: partial`. **Countervailing signal: this minimum runs in production** —
+the exact cap set (`cap_drop:ALL` + `[DAC_OVERRIDE,SETGID,SETUID,SYS_PTRACE]`, no
+`SYS_ADMIN`, not privileged) has been healthy on a live host for days
+(`observation: production`), which is stronger evidence than any lab run.
+

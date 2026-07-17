@@ -44,7 +44,7 @@ dimensions:
       validated_image: docker.io/pihole/pihole@sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b
       validated_date: "2026-07-16"
       duration_seconds: 420
-      confidence: high
+      confidence: moderate
       workload: profiles/workloads/pihole.sh
       workload_sha256: "d1757e6543795069f71d3f0fd6cc1c043e48f0ad0a804c9aca2ce69b8c735161"
       validated_via: [drop-test, ci-smoke]

@@ -35,7 +35,7 @@ dimensions:
       validated_image: docker.io/grafana/alloy@sha256:32913cbfac652d15fa84d256a74e5ee3f71575961bb19d34796ce3838bfba693
       validated_date: "2026-07-16"
       duration_seconds: 30
-      confidence: high
+      confidence: moderate
       workload: profiles/workloads/alloy.sh
       workload_sha256: "5a5396d750b6381e9712bb46ca156ccaa5b4931e6dbedd87fc1836ce107ed736"
       validated_via: [drop-test, ci-smoke]

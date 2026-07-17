@@ -54,7 +54,7 @@ services:
 | `docker.io/library/redis` | `8.2.7` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high |
 | `docker.io/prom/prometheus` | `v3.13.1` | `capabilities: cap_drop: [ALL] (zero-cap)` · `filesystem: read_only: true` | high |
 | `docker.io/pihole/pihole` | `2026.07.2` | `capabilities: cap_add: [CHOWN, DAC_OVERRIDE, NET_BIND_SERVICE, SETFCAP, SETGID, SETUID] (DNS-only; NO no-new-privileges — see criteria)` · `filesystem: read_only: false (infeasible — see criteria)` | moderate (caps) · high (fs) |
-| `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` | moderate (caps — see coverage) |
+| `docker.io/netdata/netdata` | `v2.10.3` | `capabilities: cap_add: [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` · `filesystem: read_only: true, tmpfs: [/tmp]` (persistent dirs on named volumes; `group_add:` for docker.sock — see criteria) | moderate (caps — see coverage) · high (fs) |
 | `docker.io/valkey/valkey` | `9` | `capabilities: cap_add: [SETGID, SETUID]` · `filesystem: read_only: true` | high · app-tier ✓ |
 | `ghcr.io/gethomepage/homepage` | `v1.13.2` | `filesystem: read_only: true, tmpfs: [/app/.next/cache]` | high |
 | `ghcr.io/home-assistant/home-assistant` | `2026.7.1` | `capabilities: cap_add: [DAC_OVERRIDE]` · `filesystem: read_only: true, tmpfs: [/run:exec]` | moderate (caps — base install) |

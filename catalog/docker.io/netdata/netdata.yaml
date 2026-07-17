@@ -19,8 +19,22 @@
 # non-null check passed on all-zeros and wrongly derived 5->3, regressing
 # production before this correction.)
 #
-# filesystem: not yet derived. Absence means not tested for this image —
-# not that it cannot run read-only.
+# filesystem: read_only:true, tmpfs:[/tmp]. Derived by drop-test UNDER the
+# capabilities dimension's recommendation (cap_drop:ALL + the 4 caps above, via
+# the csd spec's run.cap_add — the caps mirror of deriving caps under the fs
+# recommendation): the correctness check needs per-process metrics, which need
+# SYS_PTRACE granted. Persistent state (/etc/netdata config, /var/lib/netdata
+# state, /var/cache/netdata dbengine) belongs on named volumes (the official
+# compose shape), supplied in the derivation as service-owned (uid=201) stand-ins
+# — the caps minimum has no CHOWN, so a fresh root-owned dir is a staging
+# artifact, not a read-only finding; a prior deploy's volumes are netdata-owned.
+# /tmp is REQUIRED (the runtime-dir fallback when /run is unwritable — without it
+# the daemon exits "Cannot get/create a run directory"). /var/log/netdata derives
+# REMOVABLE: container logging goes to stdout; the startup chown of the log dir
+# fails non-fatally. READ-ONLY CONSEQUENCE: the entrypoint's PGID-based
+# `groupadd docker` needs a writable /etc/group and fails under read_only — grant
+# docker.sock access via compose `group_add:` instead of the PGID env. See
+# criteria.
 schema_version: "1.5"
 image: docker.io/netdata/netdata
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/netdata/netdata.html
@@ -86,3 +100,46 @@ dimensions:
           - removed: SETGID
             required: true
             observed: "daemon running as ROOT (privilege drop failed)"
+  filesystem:
+    read_only: true
+    tmpfs: [/tmp]
+    derivation:
+      tool: container-sec-derive
+      tool_version: "0.7.0"
+      sidecar_schema_version: "1.5"
+      observer: drop-test
+      validated_image: docker.io/netdata/netdata@sha256:bcc822ec685dd7ee488e9f99b957f479b66301be04f13f346df692ad7de94151
+      validated_date: "2026-07-17"
+      duration_seconds: 36
+      confidence: high
+      workload: profiles/workloads/netdata.sh
+      workload_sha256: ba6ae07c95eed30155baff45933b0ba9c171694a294539b08119360fc31180f6
+      validated_via: [drop-test, ci-smoke]
+      observation_backend:
+        ig_version: v0.51.0
+        gadgets: []
+      run_config:
+        user: ""
+        command: []
+        entrypoint: ""
+        network: host
+        pid: host
+        devices: []
+        security_opt: [apparmor=unconfined]
+        mounts:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /etc/os-release:/host/etc/os-release:ro
+          - /var/log:/host/var/log:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - /etc/passwd:/host/etc/passwd:ro
+          - /etc/group:/host/etc/group:ro
+        env: [PGID]
+      drop_test:
+        checks:
+          - removed: /var/log/netdata
+            required: false
+            observed: "correct: ready, daemon uid=201, per-process metrics collecting non-zero (app.dockerd_fds_open)"
+          - removed: /tmp
+            required: true
+            observed: "not ready (status=exited): API/apps.plugin not up"

@@ -37,8 +37,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/mysql@sha256:c831a0f11348d402b43d77453e17d770be2eef356615a2823fe0f5a0d6c8b9af
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/mysql@sha256:c592c15aaf4a1961e15d82eb31ea5987dda862d1c4b1e93424438c0e91dc1f8d
+      validated_date: "2026-07-17"
       duration_seconds: 540
       confidence: high
       workload: profiles/workloads/mysql.sh
@@ -81,8 +81,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/mysql@sha256:c831a0f11348d402b43d77453e17d770be2eef356615a2823fe0f5a0d6c8b9af
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/mysql@sha256:c592c15aaf4a1961e15d82eb31ea5987dda862d1c4b1e93424438c0e91dc1f8d
+      validated_date: "2026-07-17"
       duration_seconds: 12
       confidence: high
       workload: profiles/workloads/mysql.sh

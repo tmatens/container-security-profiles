@@ -16,8 +16,9 @@
 # run_config records the invocation each minimum was derived under: the default
 # (no `user:` override), so the root->postgres drop happens. Run with `user:` set,
 # postgres skips the drop and the capability minimum does not apply.
-schema_version: "1.2"
+schema_version: "1.5"
 image: docker.io/library/postgres
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/postgres.html
 applies_to:
   tags: ["16"]
 status: validated

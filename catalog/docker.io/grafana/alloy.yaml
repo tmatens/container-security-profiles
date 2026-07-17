@@ -18,8 +18,9 @@
 #
 # alloy is DISTROLESS (no shell/curl), so it is validated from a sidecar probe
 # sharing its network namespace, not `docker exec` — see the criteria doc.
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/grafana/alloy
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/grafana/alloy.html
 applies_to:
   tags: ["v1.16.2"]
 status: validated

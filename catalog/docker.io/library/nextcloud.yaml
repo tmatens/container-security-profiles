@@ -27,8 +27,9 @@
 # Apache's pid/lock dir /var/run/apache2; /var/log/apache2 and /tmp were
 # drop-tested and are NOT required. Derived by drop-test (in-stack mariadb dep).
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/library/nextcloud
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/nextcloud.html
 applies_to:
   tags: ["32"]
 status: validated

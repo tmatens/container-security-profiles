@@ -20,8 +20,9 @@
 # writable under a read-only rootfs. The data dir /var/lib/postgresql/data is a
 # persistent VOLUME. /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: ghcr.io/immich-app/postgres
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/ghcr.io/immich-app/postgres.html
 applies_to:
   tags: ["14-vectorchord0.4.3-pgvectors0.2.0"]
 status: validated

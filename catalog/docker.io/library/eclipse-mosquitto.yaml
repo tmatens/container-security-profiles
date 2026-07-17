@@ -16,8 +16,9 @@
 #
 # Both dimensions validated together; they apply as a unit. See
 # criteria/docker.io/library/eclipse-mosquitto.md.
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/library/eclipse-mosquitto
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/eclipse-mosquitto.html
 applies_to:
   tags: ["2.0"]
 status: validated

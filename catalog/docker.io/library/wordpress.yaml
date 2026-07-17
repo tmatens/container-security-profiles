@@ -30,8 +30,9 @@
 # Apache's pid/lock dir /var/run/apache2; /var/log/apache2 and /tmp were
 # drop-tested and are NOT required. Derived by drop-test (in-stack mysql dep).
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/library/wordpress
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/wordpress.html
 applies_to:
   tags: ["6.9"]
 status: validated

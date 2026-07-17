@@ -40,7 +40,7 @@ dimensions:
       validated_image: docker.io/louislam/uptime-kuma@sha256:91e963bfda569ba115206e843febb446f473ab525add4e08b2b9e3beffa16985
       validated_date: "2026-07-16"
       duration_seconds: 600
-      confidence: high
+      confidence: moderate
       workload: profiles/workloads/uptime-kuma.sh
       workload_sha256: "15c39a88737f5e4821de747d552a7d1d35bcde43fa3972d96833a940d8e5981b"
       validated_via: [drop-test, ci-smoke]

@@ -40,7 +40,7 @@ dimensions:
       validated_image: ghcr.io/home-assistant/home-assistant@sha256:f73512ba4fe06bb4d57636fe3578d0820cdec46f81e8f837ab59e451662ff3cb
       validated_date: "2026-07-16"
       duration_seconds: 101
-      confidence: high
+      confidence: moderate
       workload: profiles/workloads/home-assistant.sh
       workload_sha256: "ec8142869c48d0d292d9041eea84a2cbebc9256b39fdce1767fbf0aa461730f5"
       validated_via: [drop-test, ci-smoke]

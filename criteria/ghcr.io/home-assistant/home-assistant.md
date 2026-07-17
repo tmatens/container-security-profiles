@@ -48,6 +48,14 @@ there is no non-root-uid assertion to make.
   (the real `/config` write path) under `read_only:true` with `tmpfs:[/run:exec]`
   and `/config` a writable volume.
 
+## Coverage & confidence (moderate)
+Per ADR-018, `moderate` — this is a **base install**. HA's hardware, USB,
+Bluetooth, and network *integrations* can each need more than `DAC_OVERRIDE`: a
+serial/Zigbee stick needs a `--device` mapping, Bluetooth needs D-Bus, some
+network integrations need `NET_ADMIN`/`NET_RAW`. The workload drives none of them,
+so `coverage: partial` — "one capability" is the floor, not a promise your HA with
+integrations needs nothing more.
+
 ## Scope — this is HA *core*, integrations extend the minimum
 This is the sharp edge for Home Assistant: its capability needs are a function of the
 **enabled integrations**, and a base instance exercises none of them. Capabilities a

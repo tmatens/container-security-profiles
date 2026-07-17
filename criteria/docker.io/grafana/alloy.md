@@ -47,6 +47,12 @@ no confound for the fs dimension.
 - **Pass criteria:** alloy reaches `/-/ready` (200) and exposes `alloy_*` metrics
   under `--read-only` with `/var/lib/alloy` writable and no `/tmp`.
 
+## Coverage & confidence (moderate)
+Per ADR-018, `moderate` — Alloy runs **configurable collection pipelines**, and
+the derived zero-cap minimum is for the exercised pipeline. Other collectors
+(process, ebpf) can need `SYS_PTRACE`/BPF, a surface the workload does not bound,
+so `coverage: partial`.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation** (`derivation.run_config`): the image default —
   `run /etc/alloy/config.alloy --storage.path=/var/lib/alloy/data`, the

@@ -40,6 +40,12 @@ file-capability + user drop. Consequences vs pihole's 6-cap profile:
 - **Pass criteria:** the REST install + a local DNS rewrite + nslookup pass under
   `read_only:true` (with `conf` and `work` writable) and no rootfs tmpfs.
 
+## Coverage & confidence (moderate)
+Per ADR-018, `moderate` — the workload is DNS-only. AdGuard's **DHCP server** adds
+`NET_ADMIN` (broadcast/interface handling), an optional feature the workload does
+not drive, so `coverage: partial`. DNS-only deployments match the derived minimum;
+DHCP deployments need `NET_ADMIN`.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **DNS-only.** DHCP mode requires NET_ADMIN + raw sockets — out of scope
   (the pihole boundary).

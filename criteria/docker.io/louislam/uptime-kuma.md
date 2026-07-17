@@ -55,6 +55,11 @@ ping caveat is **measured evidence** rather than an unmeasured gap.
   `read_only:true` with `tmpfs:[/tmp]` (and `/app/data` a writable volume), and
   dropping `/tmp` breaks server startup after DB setup.
 
+## Coverage & confidence (moderate)
+Per ADR-018, `moderate` — the workload drives HTTP monitors only. **Ping monitors
+add `NET_RAW`** (raw ICMP sockets), a path the base workload never exercises, so
+`coverage: partial`. A deployment using ping monitors needs `NET_RAW` on top.
+
 ## Scope (`run_config` + out-of-band conditions)
 - **Invocation:** v2 default, embedded sqlite chosen at setup, fresh rootfs
   (no volume declared — data under `/app/data`), `no-new-privileges`.

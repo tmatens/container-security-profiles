@@ -38,7 +38,7 @@ dimensions:
       validated_image: docker.io/netdata/netdata@sha256:bcc822ec685dd7ee488e9f99b957f479b66301be04f13f346df692ad7de94151
       validated_date: "2026-07-04"
       duration_seconds: 900
-      confidence: high
+      confidence: moderate
       workload: profiles/workloads/netdata.sh
       workload_sha256: ba6ae07c95eed30155baff45933b0ba9c171694a294539b08119360fc31180f6
       validated_via: [drop-test, ci-smoke]

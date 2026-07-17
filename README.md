@@ -189,6 +189,13 @@ csd is not yet published; until it is, every profile carries enough evidence
 the derivation with any harness: apply the profile, run the workload, remove
 one element, watch it break.
 
+For a narrative walk-through of what this looks like in practice — images that
+loudly document a need for `--privileged` or root, and what they actually need
+when you measure — see
+[**docs/articles/does-your-container-need-root.md**](docs/articles/does-your-container-need-root.md).
+It includes a cautionary case (netdata) where measurement first over-derived,
+then over-corrected, before a live deployment settled it.
+
 ## Contributing
 
 Profile requests, mismatch reports, and profile contributions are all

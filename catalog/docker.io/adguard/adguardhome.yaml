@@ -16,7 +16,7 @@
 # tmpfs). Under a read-only rootfs with those two writable it serves DNS with no
 # additional tmpfs. /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-schema_version: "1.5"
+schema_version: "1.6"
 image: docker.io/adguard/adguardhome
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/adguard/adguardhome.html
 applies_to:
@@ -52,6 +52,13 @@ dimensions:
         sysctls: ["net.ipv4.ip_unprivileged_port_start=1024"]
         mounts: []
         env: []
+      features:
+        - name: "DNS filtering/resolution"
+          driven: true
+          why: "a local rewrite (csd.test→127.0.0.1) resolves under the derived set — no upstream in the loop"
+        - name: "DHCP server"
+          driven: false
+          why: "optional feature documented to need NET_ADMIN (broadcast/interface handling); not driven — DHCP deployments need NET_ADMIN on top"
       drop_test:
         checks:
           - {removed: CHOWN, required: false, observed: "correct: install/configure ok, AGH resolves local rewrite on :53"}

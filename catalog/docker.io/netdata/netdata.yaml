@@ -35,7 +35,7 @@
 # `groupadd docker` needs a writable /etc/group and fails under read_only — grant
 # docker.sock access via compose `group_add:` instead of the PGID env. See
 # criteria.
-schema_version: "1.5"
+schema_version: "1.6"
 image: docker.io/netdata/netdata
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/netdata/netdata.html
 applies_to:
@@ -77,6 +77,22 @@ dimensions:
           - /etc/passwd:/host/etc/passwd:ro
           - /etc/group:/host/etc/group:ro
         env: [PGID]
+      features:
+        - name: "host + per-process monitoring (apps.plugin /proc io/fd metrics)"
+          driven: true
+          why: "the correctness check requires a per-process fds_open chart to be NON-ZERO (dropping SYS_PTRACE zeroes it)"
+        - name: "per-container network-interface metrics (cgroup-network)"
+          driven: true
+          why: "verified on the live deploy: collects via the host-side veth fallback under the derived set (SYS_ADMIN's setns path fails once, non-fatally)"
+        - name: "eBPF collectors (ebpf.plugin)"
+          driven: false
+          why: "the image ships no ebpf.plugin, so nothing gates on it (ebpf=yes is a no-op); a custom build with the plugin would need re-derivation"
+        - name: "docker.sock-based collectors (container names/state)"
+          driven: false
+          why: "socket access is a group grant, not a capability, so it cannot move this dimension; per-process docker metrics come via /proc + SYS_PTRACE"
+        - name: "remaining optional collector surface"
+          driven: false
+          why: "not exhaustively driven — the reason this dimension's coverage grades partial (ADR-018); no known collector requires a cap outside the derived set"
       drop_test:
         checks:
           - removed: SYS_PTRACE
@@ -135,6 +151,16 @@ dimensions:
           - /etc/passwd:/host/etc/passwd:ro
           - /etc/group:/host/etc/group:ro
         env: [PGID]
+      features:
+        - name: "host + per-process monitoring under read-only rootfs"
+          driven: true
+          why: "same correctness predicate as the caps derivation, healthy end-to-end with rootfs read-only"
+        - name: "file-based logging ([logs] method = file)"
+          driven: false
+          why: "the container default logs to stdout (why /var/log/netdata derives removable); a file-logging config diverges and needs a writable log path"
+        - name: "cloud claiming / dyncfg persistent writes"
+          driven: false
+          why: "land in /var/lib/netdata, which is a named volume in production (a stand-in here), so they cannot move the tmpfs minimum"
       drop_test:
         checks:
           - removed: /var/log/netdata

@@ -23,7 +23,7 @@
 # then execs /run/s6/.../init, so a default (noexec) tmpfs fails; the exec-mounted
 # tmpfs /run:exec is required. /tmp NOT required. Derived by drop-test.
 #
-schema_version: "1.5"
+schema_version: "1.6"
 image: ghcr.io/home-assistant/home-assistant
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/ghcr.io/home-assistant/home-assistant.html
 applies_to:
@@ -58,6 +58,19 @@ dimensions:
         security_opt: ["no-new-privileges:true"]
         mounts: ["./config:/config"]
         env: [TZ]
+      features:
+        - name: "base install: web UI + onboarding owner-create"
+          driven: true
+          why: "drives the real /config write path — the DAC_OVERRIDE need — end-to-end"
+        - name: "hardware/USB/Zigbee serial integrations"
+          driven: false
+          why: "need a --device mapping (a devices-dimension question); not exercised by the base-install workload"
+        - name: "Bluetooth integrations"
+          driven: false
+          why: "need D-Bus/host bus access; not exercised"
+        - name: "network integrations (dhcp/scan class)"
+          driven: false
+          why: "some need NET_ADMIN/NET_RAW; not exercised — the reason coverage grades partial"
       drop_test:
         checks:
           - {removed: CHOWN, required: false, observed: "correct: HA up, config written as root into a non-root /config, owner onboarding succeeded"}

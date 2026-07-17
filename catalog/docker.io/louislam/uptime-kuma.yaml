@@ -23,7 +23,7 @@
 # REQUIRES /tmp writable for temp files — the server does not come up after DB
 # setup without it (drop-tested required). Derived by drop-test.
 #
-schema_version: "1.5"
+schema_version: "1.6"
 image: docker.io/louislam/uptime-kuma
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/louislam/uptime-kuma.html
 applies_to:
@@ -58,6 +58,13 @@ dimensions:
         security_opt: ["no-new-privileges:true"]
         mounts: []
         env: []
+      features:
+        - name: "HTTP/TCP monitors (create + run, socket.io API)"
+          driven: true
+          why: "the probe runs from the target's own image and asserts a monitor round-trip"
+        - name: "ping monitors"
+          driven: false
+          why: "raw ICMP needs NET_RAW — no REST path to create one from the probe; deployments using ping monitors must add NET_RAW"
       drop_test:
         checks:
           - {removed: CHOWN, required: false, observed: "correct: sqlite setup + http monitor running (UP heartbeat)"}

@@ -27,7 +27,7 @@
 # writes /usr/bin/pihole-FTL — none relocatable to a tmpfs/volume. Even with
 # generous tmpfs on the config/runtime dirs the baseline fails. See criteria.
 #
-schema_version: "1.5"
+schema_version: "1.6"
 image: docker.io/pihole/pihole
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/pihole/pihole.html
 applies_to:
@@ -63,6 +63,19 @@ dimensions:
         sysctls: ["net.ipv4.ip_unprivileged_port_start=1024"]
         mounts: []
         env: [FTLCONF_webserver_api_password]
+      features:
+        - name: "DNS filtering (FTL)"
+          driven: true
+          why: "pi.hole is answered by FTL itself under the derived set — no upstream in the loop"
+        - name: "DHCP server"
+          driven: false
+          why: "documented conditional cap NET_ADMIN; not driven"
+        - name: "NTP client"
+          driven: false
+          why: "documented conditional cap SYS_TIME; not driven"
+        - name: "priority tuning (SYS_NICE)"
+          driven: false
+          why: "documented conditional cap; not driven"
       drop_test:
         checks:
           - {removed: CHOWN, required: true, observed: "container exited: [!] ERROR: Did not find 'FTL started' message in FTL.log in 30s"}

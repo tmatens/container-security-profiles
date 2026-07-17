@@ -12,8 +12,9 @@
 # filesystem: read_only:true, tmpfs:[] — the default in-memory store writes
 # nothing; enabling cache-file / attachment-cache adds a data VOLUME, not
 # tmpfs. See criteria/docker.io/binwiederhier/ntfy.md.
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/binwiederhier/ntfy
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/binwiederhier/ntfy.html
 applies_to:
   tags: ["v2.14.0"]
 status: validated

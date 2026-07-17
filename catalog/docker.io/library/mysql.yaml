@@ -23,8 +23,9 @@
 # mysqld needs /var/run/mysqld (unix socket + pid) and /tmp (temp files)
 # writable. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/library/mysql
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/mysql.html
 applies_to:
   tags: ["8.4"]
 status: validated

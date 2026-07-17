@@ -16,8 +16,9 @@
 # tmpfs). Under a read-only rootfs with those two writable it serves DNS with no
 # additional tmpfs. /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/adguard/adguardhome
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/adguard/adguardhome.html
 applies_to:
   tags: ["v0.107.78"]
 status: validated

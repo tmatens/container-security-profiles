@@ -12,8 +12,9 @@
 # serves its API with no tmpfs. /tmp was drop-tested and is NOT required.
 # Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/syncthing/syncthing
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/syncthing/syncthing.html
 applies_to:
   tags: ["2.0"]
 status: validated

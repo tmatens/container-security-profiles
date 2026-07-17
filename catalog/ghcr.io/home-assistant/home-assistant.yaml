@@ -23,8 +23,9 @@
 # then execs /run/s6/.../init, so a default (noexec) tmpfs fails; the exec-mounted
 # tmpfs /run:exec is required. /tmp NOT required. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: ghcr.io/home-assistant/home-assistant
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/ghcr.io/home-assistant/home-assistant.html
 applies_to:
   tags: ["2026.7.1"]
 status: validated

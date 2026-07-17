@@ -27,8 +27,9 @@
 #
 # filesystem: not yet derived. Absence means not tested for this image —
 # not that it cannot run read-only.
-schema_version: "1.4"
+schema_version: "1.5"
 image: codeberg.org/forgejo/forgejo
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/codeberg.org/forgejo/forgejo.html
 applies_to:
   tags: ["15"]
 status: validated

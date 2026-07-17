@@ -17,8 +17,9 @@
 #    Those paths hold PERSISTENT data and belong on VOLUMES, not tmpfs — see the
 #    criteria doc. This is the honest contrast to postgres, whose /run/postgresql
 #    socket dir is ephemeral and so is genuinely tmpfs.
-schema_version: "1.2"
+schema_version: "1.5"
 image: docker.io/library/caddy
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/caddy.html
 applies_to:
   tags: ["2"]
 status: validated

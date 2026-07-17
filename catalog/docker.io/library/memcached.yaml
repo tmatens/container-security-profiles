@@ -9,8 +9,9 @@
 # writes nothing to disk — it runs correctly under a read-only rootfs with no
 # tmpfs. /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/library/memcached
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/memcached.html
 applies_to:
   tags: ["1.6"]
 status: validated

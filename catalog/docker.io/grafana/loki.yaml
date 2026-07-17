@@ -17,8 +17,9 @@
 #
 # loki is DISTROLESS (no shell/curl), so it is validated from a sidecar probe
 # sharing its network namespace, not `docker exec` — see the criteria doc.
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/grafana/loki
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/grafana/loki.html
 applies_to:
   tags: ["3.7.2"]
 status: validated

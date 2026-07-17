@@ -20,8 +20,9 @@
 # above are already derived without any device. NOT in the re-derivation
 # manifest: the csd-derive runner VM has no GPU, so this dimension is
 # revalidated manually on digest bumps (criteria file has the procedure).
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/jellyfin/jellyfin
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/jellyfin/jellyfin.html
 applies_to:
   tags: ["10.11"]
 status: validated

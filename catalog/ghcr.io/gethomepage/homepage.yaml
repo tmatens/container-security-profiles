@@ -9,8 +9,9 @@
 #
 # capabilities: not yet derived. Absence means not tested for this image —
 # not that the Docker default capability set is needed.
-schema_version: "1.2"
+schema_version: "1.5"
 image: ghcr.io/gethomepage/homepage
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/ghcr.io/gethomepage/homepage.html
 applies_to:
   tags: ["v1.13.2"]
 status: validated

@@ -23,8 +23,9 @@
 # REQUIRES /tmp writable for temp files — the server does not come up after DB
 # setup without it (drop-tested required). Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/louislam/uptime-kuma
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/louislam/uptime-kuma.html
 applies_to:
   tags: ["2"]
 status: validated

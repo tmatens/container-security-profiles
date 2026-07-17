@@ -21,8 +21,9 @@
 # operations and degrade gracefully without) — "exercised" here does NOT
 # mean "required". The two observers answer different questions; where they
 # diverge, drop-test wins for the minimum.
-schema_version: "1.0"
+schema_version: "1.5"
 image: docker.io/netdata/netdata
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/exploratory/docker.io/netdata/netdata.html
 status: exploratory
 acceptance_contract_violations:
   - confidence.level "low" below moderate (see confidence.factors)

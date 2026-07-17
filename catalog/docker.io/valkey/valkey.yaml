@@ -15,8 +15,9 @@
 # serves the PING + SET/GET round-trip with no additional tmpfs. /tmp NOT
 # required. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/valkey/valkey
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/valkey/valkey.html
 applies_to:
   tags: ["9"]
 status: validated

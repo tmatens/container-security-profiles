@@ -27,8 +27,9 @@
 # writes /usr/bin/pihole-FTL — none relocatable to a tmpfs/volume. Even with
 # generous tmpfs on the config/runtime dirs the baseline fails. See criteria.
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/pihole/pihole
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/pihole/pihole.html
 applies_to:
   tags: ["2026.07.2"]
 status: validated

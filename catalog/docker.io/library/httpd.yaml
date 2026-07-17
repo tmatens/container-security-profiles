@@ -20,8 +20,9 @@
 # it (AH00099: could not create httpd.pid); /tmp was drop-tested and is NOT
 # required. Derived by drop-test.
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/library/httpd
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/httpd.html
 applies_to:
   tags: ["2.4"]
 status: validated

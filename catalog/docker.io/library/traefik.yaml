@@ -22,8 +22,9 @@
 # dynamic routing config rides a READ-ONLY mount (the file provider reads it,
 # never writes); /tmp was drop-tested and is NOT required. Derived by drop-test.
 #
-schema_version: "1.4"
+schema_version: "1.5"
 image: docker.io/library/traefik
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/traefik.html
 applies_to:
   tags: ["v3.7"]
 status: validated

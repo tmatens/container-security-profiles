@@ -19,8 +19,9 @@
 # mongod additionally needs /tmp writable — it creates its unix socket
 # (/tmp/mongodb-27017.sock) there. Derived by drop-test.
 #
-schema_version: "1.3"
+schema_version: "1.5"
 image: docker.io/library/mongo
+reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/library/mongo.html
 applies_to:
   tags: ["8.0"]
 status: validated

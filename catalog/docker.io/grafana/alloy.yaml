@@ -18,7 +18,7 @@
 #
 # alloy is DISTROLESS (no shell/curl), so it is validated from a sidecar probe
 # sharing its network namespace, not `docker exec` — see the criteria doc.
-schema_version: "1.5"
+schema_version: "1.6"
 image: docker.io/grafana/alloy
 reference_url: https://tmatens.github.io/container-security-profiles/profiles/docker.io/grafana/alloy.html
 applies_to:
@@ -53,6 +53,13 @@ dimensions:
         security_opt: ["no-new-privileges:true"]
         mounts: ["alloy-data:/var/lib/alloy"]
         env: []
+      features:
+        - name: "the exercised collection pipeline"
+          driven: true
+          why: "the committed pipeline config runs clean at zero caps"
+        - name: "process / eBPF collectors"
+          driven: false
+          why: "configurable pipelines can need SYS_PTRACE/BPF — a surface the workload does not bound; the reason coverage grades partial"
       drop_test:
         checks:
           - {removed: CHOWN, required: false, observed: "correct: alloy ready, pipeline live (82 alloy_ metrics), storage.path writable"}

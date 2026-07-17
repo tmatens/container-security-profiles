@@ -294,6 +294,24 @@ def render_derivation(deriv):
     ])
 
 
+def render_features(features):
+    """The feature ledger (schema 1.6): what the workload did and didn't drive."""
+    if not features:
+        return ""
+    rows = "".join(
+        "<tr><td>{badge}</td><td>{name}</td><td>{why}</td></tr>".format(
+            badge=('<span class="badge ok">driven</span>' if f.get("driven")
+                   else '<span class="badge warn">not driven</span>'),
+            name=esc(f.get("name")), why=esc(f.get("why")))
+        for f in features)
+    return ("<h3>Feature coverage (ledger)</h3>"
+            '<p class="muted">A drop-test proves the minimum for what the workload '
+            "exercised. Privilege-relevant features it did not drive are listed "
+            "honestly — using one may need more than this minimum.</p>"
+            f'<div class="tablewrap"><table><tr><th></th><th>feature</th>'
+            f"<th>evidence / reason</th></tr>{rows}</table></div>")
+
+
 def render_run_config(rc):
     if not rc:
         return ""
@@ -344,6 +362,7 @@ def render_profile_page(profile, generated, commit, freshness):
         body.append(f"<h2>Dimension: {esc(name)}</h2>")
         body.append(f"<p><strong>{esc(dim_summary(name, dim))}</strong></p>")
         body.append(render_derivation(deriv))
+        body.append(render_features(deriv.get("features")))
         body.append(render_drop_test(deriv.get("drop_test")))
         body.append(render_run_config(deriv.get("run_config")))
 

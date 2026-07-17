@@ -111,3 +111,43 @@ the exact cap set (`cap_drop:ALL` + `[DAC_OVERRIDE,SETGID,SETUID,SYS_PTRACE]`, n
 `SYS_ADMIN`, not privileged) has been healthy on a live host for days
 (`observation: production`), which is stronger evidence than any lab run.
 
+
+## Filesystem dimension: read_only:true, tmpfs:[/tmp]
+
+Derived by drop-test (csd `testdata/drop-test/netdata-fs.yaml`) **under the
+capabilities dimension's recommendation** — the csd harness's `run.cap_add`
+carries `cap_drop:ALL + [DAC_OVERRIDE, SETGID, SETUID, SYS_PTRACE]` into the fs
+trials (the caps mirror of deriving caps under the fs recommendation), because
+the correctness check requires per-process metrics and those require
+`SYS_PTRACE` granted. Same representative host-monitor invocation as the
+capabilities derivation; same correctness check (healthy + API up + non-root
+daemon + per-process metrics non-zero).
+
+**The persistent dirs are volumes, not tmpfs.** `/etc/netdata` (user config),
+`/var/lib/netdata` (GUID, registry, dyncfg, cloud claim), `/var/cache/netdata`
+(dbengine) are not declared VOLUMEs in the image, so production mounts them as
+named volumes (the official compose shape). The derivation supplies
+`/var/lib/netdata` and `/var/cache/netdata` as **service-owned (`uid=201`)
+writable stand-ins**: the caps minimum has no `CHOWN`, so a fresh root-owned
+dir fails on ownership — a staging artifact (the valkey lesson), since a prior
+deploy's volumes are netdata-owned. `/etc/netdata` needs no stand-in: with no
+user config present, netdata falls back to stock config under
+`/usr/lib/netdata` read-only clean.
+
+**Checks:**
+- `/tmp` — **required**. netdata's runtime dir prefers `/run/netdata`; when
+  that is unwritable it falls back to `/tmp`, and with neither writable the
+  daemon exits at startup ("Cannot get/create a run directory").
+- `/var/log/netdata` — **removable**. Container logging goes to stdout/stderr;
+  the entrypoint's chown of the log dir fails non-fatally under read-only.
+  Caveat: an operator who reconfigures file-based logging (`[logs] method`)
+  diverges from this derivation and needs a writable log path.
+
+**Read-only consequence — docker group grant.** The entrypoint's `PGID`-based
+`groupadd docker` rewrites `/etc/group`, which a read-only rootfs forbids
+("Failed to add group docker"). Under this profile, grant docker.sock access
+with compose `group_add: ["<docker gid>"]` instead of the `PGID` env var. The
+drop-test's correctness check still collected docker per-process metrics
+(`app.dockerd_fds_open` non-zero) because apps.plugin reads `/proc` via
+`SYS_PTRACE`, not the socket — but socket-based collectors (container names,
+docker state) need the `group_add` form.

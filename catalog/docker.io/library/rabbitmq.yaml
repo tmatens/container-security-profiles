@@ -32,8 +32,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/rabbitmq@sha256:345dd3c11d67892c7b452fb2237d94f577acb2aa0569c3fd5c9841eb0c1b57fb
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/rabbitmq@sha256:24e754f73cc8559764e056df8ca04e114a5bdbdcb95a60aae1867be86f71de38
+      validated_date: "2026-07-27"
       duration_seconds: 420
       confidence: high
       workload: profiles/workloads/rabbitmq.sh

@@ -37,8 +37,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/traefik@sha256:4299bbed850421258fc5448c2e0e6ad350981d4d335a68de11b92448aedbefe5
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/traefik@sha256:652929a140a32d7cafafb13c6cdfab5376cfeff800f51397b87b524501ed02a8
+      validated_date: "2026-07-27"
       duration_seconds: 300
       confidence: high
       workload: profiles/workloads/traefik.sh
@@ -83,8 +83,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/traefik@sha256:4299bbed850421258fc5448c2e0e6ad350981d4d335a68de11b92448aedbefe5
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/traefik@sha256:652929a140a32d7cafafb13c6cdfab5376cfeff800f51397b87b524501ed02a8
+      validated_date: "2026-07-27"
       duration_seconds: 5
       confidence: high
       workload: profiles/workloads/traefik.sh

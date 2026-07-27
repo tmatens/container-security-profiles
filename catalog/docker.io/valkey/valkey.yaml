@@ -42,8 +42,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/valkey/valkey@sha256:8e8d64b405ce18f41b8e5ee20aa4687a8ed0022d1298f2ce31cdcf3a76e09411
-      validated_date: "2026-07-16"
+      validated_image: docker.io/valkey/valkey@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
+      validated_date: "2026-07-27"
       duration_seconds: 120
       confidence: high
       workload: profiles/workloads/valkey.sh
@@ -86,8 +86,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/valkey/valkey@sha256:8e8d64b405ce18f41b8e5ee20aa4687a8ed0022d1298f2ce31cdcf3a76e09411
-      validated_date: "2026-07-16"
+      validated_image: docker.io/valkey/valkey@sha256:3acc0687f2a2e1091fae6450d7842dd658c941338cf0a873ddd9e14b9e4ea4dd
+      validated_date: "2026-07-27"
       duration_seconds: 2
       confidence: high
       workload: profiles/workloads/valkey.sh

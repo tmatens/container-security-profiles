@@ -34,8 +34,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/mongo@sha256:3ce3de7f40e914034b03b7dec654005ab54f7dc8306937e44ec6760d9e9409a1
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/mongo@sha256:5351bff2b5d1563e3fa603a74b9be85ef9323e10aeb0b45cea933a93876e77fd
+      validated_date: "2026-07-27"
       duration_seconds: 300
       confidence: high
       workload: profiles/workloads/mongo.sh
@@ -78,8 +78,8 @@ dimensions:
       tool_version: "0.7.0"
       sidecar_schema_version: "1.5"
       observer: drop-test
-      validated_image: docker.io/library/mongo@sha256:3ce3de7f40e914034b03b7dec654005ab54f7dc8306937e44ec6760d9e9409a1
-      validated_date: "2026-07-16"
+      validated_image: docker.io/library/mongo@sha256:5351bff2b5d1563e3fa603a74b9be85ef9323e10aeb0b45cea933a93876e77fd
+      validated_date: "2026-07-27"
       duration_seconds: 5
       confidence: high
       workload: profiles/workloads/mongo.sh

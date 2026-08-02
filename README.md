@@ -10,6 +10,16 @@ without them. Not guidance copied from a blog post: every profile is
 digest-pinned, backed by a committed workload script, and carries its full
 derivation evidence in the file.
 
+> ⏸️ **Catalog updates paused (2026-08-02).** The deriving tool
+> ([container-sec-derive](https://github.com/tmatens/container-sec-derive)) is on a
+> maintenance freeze, so automated re-derivation is paused. Existing profiles remain
+> **valid for their pinned digests** — that is exactly what digest-pinning is for —
+> but they will not track newer image digests while paused. The weekly staleness
+> check still runs and flags digest drift in a tracking issue; acting on those
+> flags is deferred until the pause lifts. Profile requests and mismatch reports
+> are still welcome (issues are watched), but expect new derivations and
+> exploratory→validated promotions to wait for the pause to end.
+
 For example, immich ships its postgres with `cap_add` including `FOWNER` — the
 derived, drop-tested minimum is four capabilities, and `FOWNER` is a genuine
 over-grant:

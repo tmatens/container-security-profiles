@@ -4,6 +4,12 @@ Thanks for your interest. This catalog accepts two kinds of contribution:
 **profile requests** (open an issue — the easiest way to help) and **profile
 contributions** (a PR with the derived profile and its evidence).
 
+> ⏸️ **Note (2026-08-02):** catalog updates are paused while the deriving tool is on
+> a maintenance freeze (see the README banner). Requests and mismatch reports are
+> still read, but new derivations — including the maintainer automation that
+> promotes exploratory contributions to `validated` — are deferred until the pause
+> lifts, so expect contribution PRs to sit as `exploratory` longer than usual.
+
 ## Requesting a profile
 
 Open a [profile request](../../issues/new?template=profile-request.yml) with the

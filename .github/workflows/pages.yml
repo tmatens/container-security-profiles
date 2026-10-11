@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
       - run: pip install -r requirements-site.txt
       - name: compute pin freshness (best-effort — never gates the build)
         run: python scripts/check_staleness.py --catalog-dir catalog --json freshness.json || true
